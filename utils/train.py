@@ -88,7 +88,7 @@ def train(
 
             # Passing the batch down the model
             outputs = model(inputs)
-
+            
             # forward + backward + optimize
             loss = criterion(outputs, labels)
             loss.backward()
