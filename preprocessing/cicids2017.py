@@ -91,20 +91,20 @@ class CICIDS2017Preprocessor(object):
         # Proposed Groupings
         attack_group = {
             'BENIGN': 'Benign',
-            'PortScan': 'PortScan',
-            'DDoS': 'DoS/DDoS',
-            'DoS Hulk': 'DoS/DDoS',
-            'DoS GoldenEye': 'DoS/DDoS',
-            'DoS slowloris': 'DoS/DDoS', 
-            'DoS Slowhttptest': 'DoS/DDoS',
-            'Heartbleed': 'DoS/DDoS',
-            'FTP-Patator': 'Brute Force',
-            'SSH-Patator': 'Brute Force',
-            'Bot': 'Botnet ARES',
-            'Web Attack � Brute Force': 'Web Attack',
-            'Web Attack � Sql Injection': 'Web Attack',
-            'Web Attack � XSS': 'Web Attack',
-            'Infiltration': 'Infiltration'
+            'PortScan': 'Common',
+            'DDoS': 'Common',
+            'DoS Hulk': 'Common',
+            'DoS GoldenEye': 'Common',
+            'DoS slowloris': 'Common', 
+            'DoS Slowhttptest': 'Common',
+            'Heartbleed': 'Zero Day',
+            'FTP-Patator': 'Common',
+            'SSH-Patator': 'Common',
+            'Bot': 'Common',
+            'Web Attack � Brute Force': 'Common',
+            'Web Attack � Sql Injection': 'Zero Day',
+            'Web Attack � XSS': 'Zero Day',
+            'Infiltration': 'Zero Day'
         }
 
         # Create grouped label column

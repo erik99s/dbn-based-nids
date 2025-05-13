@@ -81,7 +81,7 @@ def main(config):
     valid_output_true = train_history["valid"]["output_true"]
     valid_output_pred = train_history["valid"]["output_pred"]
 
-    labels = ["Benign", "Botnet ARES", "Brute Force", "DoS/DDoS", "PortScan", "Web Attack", "Infiltration"]
+    labels = ["Benign", "Common", "Zero Day"]
 
     ## Training Set results
     logging.info('Training Set -- Classification Report')
@@ -141,7 +141,7 @@ def main(config):
     visualisation.plot_confusion_matrix(
         y_true=test_output_true,
         y_pred=test_output_pred,
-        labels=labels,
+        labels=labels,  
         save=True,
         save_dir=IMAGE_DIR,
         filename=f'{config["name"]}_test_confusion_matrix.pdf'
