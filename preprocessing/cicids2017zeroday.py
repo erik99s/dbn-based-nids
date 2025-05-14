@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import glob
 import os
-import logging
 
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, QuantileTransformer
 from sklearn.model_selection import train_test_split
@@ -90,7 +89,6 @@ class CICIDS2017Preprocessor(object):
     def group_labels(self):
         """"""
         # Proposed Groupings
-
         """
         attack_group = {
             'BENIGN': 'Benign',
@@ -109,8 +107,8 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'Web Attack',
             'Infiltration': 'Infiltration'
         }
-        """
         
+        """
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'PortScan', 
@@ -119,38 +117,50 @@ class CICIDS2017Preprocessor(object):
             'DoS GoldenEye': 'DoS',
             'DoS slowloris': 'DoS', 
             'DoS Slowhttptest': 'DoS',
-            'Heartbleed': 'DoS',
+            'Heartbleed': 'ZeroDay',
             'FTP-Patator': 'Brute Force',
             'SSH-Patator': 'Brute Force',
             'Bot': 'Bot',
             'Web Attack � Brute Force': 'Brute Force',
-            'Web Attack � Sql Injection': 'Zero Day',
-            'Web Attack � XSS': 'Zero Day',
-            'Infiltration': 'Zero Day'
+            'Web Attack � Sql Injection': 'ZeroDay',
+            'Web Attack � XSS': 'ZeroDay',
+            'Infiltration': 'ZeroDay'
         }
+        
 
         # Create grouped label column
         self.data['label_category'] = self.data['label'].map(lambda x: attack_group[x])
         
     def train_valid_test_split(self):
         """"""
+
+        self.dataz = self.data[ self.data['label_category'] != 'ZeroDay']
+
+        self.labelsz = self.data['label_category']
+        self.featuresz = self.data.drop(labels=['label', 'label_category'], axis=1)
+
         self.labels = self.data['label_category']
         self.features = self.data.drop(labels=['label', 'label_category'], axis=1)
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            self.features,
-            self.labels,
-            test_size=(self.validation_size + self.testing_size),
+
+        # split training and testing
+        # train 0.8 and testing 0.2
+        X_train, X_val, y_train, y_val = train_test_split(
+            self.featuresz,
+            self.labelsz,
+            test_size=self.validation_size,   
             random_state=42,
             stratify=self.labels
         )
-        X_test, X_val, y_test, y_val = train_test_split(
-            X_test,
-            y_test,
-            test_size=self.testing_size / (self.validation_size + self.testing_size),
+
+        _, X_test, _, y_test = train_test_split(
+            self.features,
+            self.labels,
+            test_size=self.testing_size, 
             random_state=42
         )
-    
+
+
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     
     def scale(self, training_set, validation_set, testing_set):
@@ -178,8 +188,6 @@ class CICIDS2017Preprocessor(object):
         y_train = pd.DataFrame(le.fit_transform(y_train), columns=["label"])
         y_val = pd.DataFrame(le.transform(y_val), columns=["label"])
         y_test = pd.DataFrame(le.transform(y_test), columns=["label"])
-
-
 
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 

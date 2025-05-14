@@ -81,9 +81,7 @@ def main(config):
     valid_output_true = train_history["valid"]["output_true"]
     valid_output_pred = train_history["valid"]["output_pred"]
 
-    labels = ["Benign", "Common", "Zero Day"]
-
-    ## Training Set results
+    labels = ["Benign", "Bot", "Brute Force", "DoS/DDoS", "PortScan", "Zero Day"]    ## Training Set results
     logging.info('Training Set -- Classification Report')
     logging.info(classification_report(
         y_true=train_output_true,

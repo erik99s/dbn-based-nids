@@ -23,6 +23,8 @@ init: $(BIN)/activate
 dataset: init
 	$(BIN)/python ./preprocessing/cicids2017.py
 
+zeroday: init
+	$(BIN)/python ./preprocessing/cicids2017zeroday.py
 
 run: init
 	$(BIN)/python main.py --config ./configs/deepBeliefNetwork.json
