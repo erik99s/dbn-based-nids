@@ -91,7 +91,6 @@ class CICIDS2017Preprocessor(object):
         """"""
         # Proposed Groupings
 
-        """
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'PortScan', 
@@ -109,8 +108,8 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'Web Attack',
             'Infiltration': 'Infiltration'
         }
+
         """
-        
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'PortScan', 
@@ -128,6 +127,9 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'Zero Day',
             'Infiltration': 'Zero Day'
         }
+        """ 
+        
+        
 
         # Create grouped label column
         self.data['label_category'] = self.data['label'].map(lambda x: attack_group[x])
@@ -179,6 +181,23 @@ class CICIDS2017Preprocessor(object):
         y_val = pd.DataFrame(le.transform(y_val), columns=["label"])
         y_test = pd.DataFrame(le.transform(y_test), columns=["label"])
 
+        """
+        print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
+        print(f"Train: {len(y_train)}, Val: {len(y_val)}, Test: {len(y_test)}")
+
+        print(y_test['label'].value_counts())
+
+        Train: 1455436, Val: 485146, Test: 485145
+        Train: 1455436, Val: 485146, Test: 485145
+        0    407115
+        3     64142
+        5     11346
+        2      1672
+        6       464
+        1       398
+        4         8
+
+        """
 
 
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)

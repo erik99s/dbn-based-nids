@@ -134,23 +134,28 @@ class CICIDS2017Preprocessor(object):
     def train_valid_test_split(self):
         """"""
 
-        self.dataz = self.data[ self.data['label_category'] != 'ZeroDay']
+        print(self.data.shape)
 
-        self.labelsz = self.data['label_category']
-        self.featuresz = self.data.drop(labels=['label', 'label_category'], axis=1)
+        labelsToRemove = ['PortScan', 'DoS', 'Brute Force', 'Bot']
+        self.data = self.data[~self.data['label_category'].isin(labelsToRemove)]
+
+        print(self.data.shape)
+
+        self.datatrain = self.data[self.data['label_category'] != 'Zero Day']
+
+
+        self.labelstrain = self.datatrain['label_category']
+        self.featurestrain = self.datatrain.drop(labels=['label', 'label_category'], axis=1)
 
         self.labels = self.data['label_category']
         self.features = self.data.drop(labels=['label', 'label_category'], axis=1)
 
-
-        # split training and testing
-        # train 0.8 and testing 0.2
         X_train, X_val, y_train, y_val = train_test_split(
-            self.featuresz,
-            self.labelsz,
+            self.featurestrain,
+            self.labelstrain,
             test_size=self.validation_size,   
             random_state=42,
-            stratify=self.labels
+            stratify=self.labelstrain
         )
 
         _, X_test, _, y_test = train_test_split(
@@ -171,23 +176,50 @@ class CICIDS2017Preprocessor(object):
         numeric_features = self.features.select_dtypes(exclude=[object]).columns
 
         preprocessor = ColumnTransformer(transformers=[
-            ('categoricals', OneHotEncoder(drop='first', sparse=False, handle_unknown='error'), categorical_features),
+            ('categoricals', OneHotEncoder(drop='first', sparse=False, handle_unknown='ignore'), categorical_features),
             ('numericals', QuantileTransformer(), numeric_features)
         ])
 
         # Preprocess the features
-        columns = numeric_features.tolist()
+        # columns = numeric_features.tolist()
 
-        X_train = pd.DataFrame(preprocessor.fit_transform(X_train), columns=columns)
-        X_val = pd.DataFrame(preprocessor.transform(X_val), columns=columns)
-        X_test = pd.DataFrame(preprocessor.transform(X_test), columns=columns)
+        X_train = pd.DataFrame(preprocessor.fit_transform(X_train))
+        X_val = pd.DataFrame(preprocessor.transform(X_val))
+        X_test = pd.DataFrame(preprocessor.transform(X_test))
 
         # Preprocess the labels
-        le = LabelEncoder()
 
-        y_train = pd.DataFrame(le.fit_transform(y_train), columns=["label"])
+        all_labels = pd.concat([y_train, y_val, y_test])
+        all_classes = sorted(all_labels.unique())
+
+        le = LabelEncoder()
+        le.classes_ = np.array(all_classes)
+
+
+        y_train = pd.DataFrame(le.transform(y_train), columns=["label"])
         y_val = pd.DataFrame(le.transform(y_val), columns=["label"])
         y_test = pd.DataFrame(le.transform(y_test), columns=["label"])
+
+    
+        """
+        Printing the following lines of code gives the result below
+
+        print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
+        print(f"Train: {len(y_train)}, Val: {len(y_val)}, Test: {len(y_test)}")
+
+        print(y_test['label'].value_counts())
+
+            (2830743, 78)
+            (2425727, 78)
+            (2425727, 68)
+            (2425727, 50)
+            Train: 1628980, Val: 407245, Test: 407245
+            Train: 1628980, Val: 407245, Test: 407245
+            0    407100
+            1       145
+        """
+
+
 
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
@@ -204,14 +236,20 @@ if __name__ == "__main__":
     # Read datasets
     cicids2017.read_data()
 
+    print(cicids2017.data.shape)
+
     # Remove NaN, -Inf, +Inf, Duplicates
     cicids2017.remove_duplicate_values()
     cicids2017.remove_missing_values
     cicids2017.remove_infinite_values()
 
+    print(cicids2017.data.shape)
+
     # Drop constant & correlated features
     cicids2017.remove_constant_features()
+    print(cicids2017.data.shape)
     cicids2017.remove_correlated_features()
+    print(cicids2017.data.shape)
 
     # Create new label category
     cicids2017.group_labels()
@@ -219,6 +257,7 @@ if __name__ == "__main__":
     # Split & Normalise data sets
     training_set, validation_set, testing_set            = cicids2017.train_valid_test_split()
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(training_set, validation_set, testing_set)
+
     
     # Save the results
     X_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_features.pkl'))
