@@ -203,6 +203,8 @@ class RBM(nn.Module):
         return pl
 
     def fit(self, train_loader):
+        print("this is the rbm")
+        print(self.n_hidden)
         """Fits a new RBM model.
 
         Parameters

@@ -159,6 +159,7 @@ class DBN(nn.Module):
         return out
 
     def fit(self, train_loader):
+        
         """Fits a new DBN model.
 
         Parameters

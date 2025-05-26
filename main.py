@@ -92,7 +92,7 @@ def main(config):
     4         8
     """
 
-    labels = ["Benign", "Botnet ARES", "Brute Force", "DoS/DDoS","Infiltration", "PortScan", "Web Attack"]
+    labels = ["Botnet ARES", "Brute Force", "DoS/DDoS","Infiltration", "PortScan", "Web Attack"]
     # labels = ['Benign', 'ZeroDay']
 
     logging.info('Training Set -- Classification Report')

@@ -230,9 +230,8 @@ if __name__ == "__main__":
         data_path=DATA_DIR,
         training_size=0.6,
         validation_size=0.2,
-        testing_size=0.2
+        testing_size=0.2,
     )
-
     # Read datasets
     cicids2017.read_data()
 

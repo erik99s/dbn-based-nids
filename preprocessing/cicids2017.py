@@ -12,11 +12,12 @@ from sklearn.compose import ColumnTransformer
 DATA_DIR  = os.path.join(os.path.abspath("."), "data")
 
 class CICIDS2017Preprocessor(object):
-    def __init__(self, data_path, training_size, validation_size, testing_size):
+    def __init__(self, data_path, training_size, validation_size, testing_size, tp):
         self.data_path = data_path
         self.training_size = training_size
         self.validation_size = validation_size
         self.testing_size = testing_size
+        self.tp = tp
         
         self.data = None
         self.features = None
@@ -108,7 +109,6 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'Web Attack',
             'Infiltration': 'Infiltration'
         }
-
         """
         attack_group = {
             'BENIGN': 'Benign',
@@ -127,7 +127,8 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'Zero Day',
             'Infiltration': 'Zero Day'
         }
-        """ 
+        """
+        
         
         
 
@@ -136,23 +137,29 @@ class CICIDS2017Preprocessor(object):
         
     def train_valid_test_split(self):
         """"""
-        self.labels = self.data['label_category']
-        self.features = self.data.drop(labels=['label', 'label_category'], axis=1)
+        # Used to for only benign traffic
+        
+        self.benign = self.data[self.data['label_category'] != 'Benign' ]
 
-        X_train, X_test, y_train, y_test = train_test_split(
-            self.features,
-            self.labels,
-            test_size=(self.validation_size + self.testing_size),
-            random_state=42,
-            stratify=self.labels
-        )
-        X_test, X_val, y_test, y_val = train_test_split(
-            X_test,
-            y_test,
-            test_size=self.testing_size / (self.validation_size + self.testing_size),
-            random_state=42
-        )
-    
+        self.labels = self.benign['label_category']
+        self.features = self.benign.drop(labels=['label', 'label_category'], axis=1)
+
+        print(self.benign['label_category'].unique())
+      
+        if self.tp == 0:
+            X_train, X_test, y_train, y_test = train_test_split(
+                self.features,
+                self.labels,
+                test_size=(self.validation_size + self.testing_size),
+                random_state=42,
+                stratify=self.labels
+            )
+            X_test, X_val, y_test, y_val = train_test_split(
+                X_test,
+                y_test,
+                test_size=self.testing_size / (self.validation_size + self.testing_size),
+                random_state=42
+            )
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     
     def scale(self, training_set, validation_set, testing_set):
@@ -198,7 +205,7 @@ class CICIDS2017Preprocessor(object):
         4         8
 
         """
-
+        print(X_train.shape)
 
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
@@ -209,7 +216,8 @@ if __name__ == "__main__":
         data_path=DATA_DIR,
         training_size=0.6,
         validation_size=0.2,
-        testing_size=0.2
+        testing_size=0.2,
+        tp = 0 # change this one to change the data split
     )
 
     # Read datasets
