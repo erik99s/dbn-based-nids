@@ -17,8 +17,8 @@ class RBM(nn.Module):
                  momentum=0.9,
                  decay=0,
                  batch_size=64,
-                 num_epochs=10,
-                 k=1,
+                 num_epochs=30,
+                 k=3,
                  device="cpu"):
 
         super(RBM, self).__init__()
