@@ -43,6 +43,8 @@ def main(config):
     model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
     model.to(DEVICE)
 
+    print(model)
+
     logging.info("Loading dataset...")
     train_loader, valid_loader, test_loader = dataset.load_data(
         data_path=DATA_DIR,
@@ -74,6 +76,7 @@ def main(config):
         num_epochs=config["trainer"]["num_epochs"],
         device=DEVICE
     )
+    print(model)
     logging.info(f'{config["name"]} model trained!')
 
     train_output_true = train_history["train"]["output_true"]
@@ -135,6 +138,7 @@ def main(config):
         test_loader=test_loader,
         device=DEVICE
     )
+
 
     test_output_true = test_history["test"]["output_true"]
     test_output_pred = test_history["test"]["output_pred"]

@@ -81,6 +81,7 @@ class DBN(nn.Module):
         self.fc = nn.Linear(self.n_hidden[-1], self.n_classes)
 
     def reconstruct(self, data_loader):
+        print("DBN, Entering: reconstruct")
         """Reconstructs batches of new input_data.
 
         Parameters
@@ -101,7 +102,10 @@ class DBN(nn.Module):
         # For every batch
         for input_data, _ in tqdm(data_loader):
 
+            print(input_data.shape)
+
             # Applying the initial hidden probabilities as the input_data
+            batch_size = input_data.size(0)
             hidden_probs = input_data
 
             # For every possible model (RBM)
@@ -158,7 +162,9 @@ class DBN(nn.Module):
         out = self.fc(x)
         return out
 
+
     def fit(self, train_loader):
+        print("DBN, Entering: fit")
         
         """Fits a new DBN model.
 
@@ -207,5 +213,9 @@ class DBN(nn.Module):
             # Appending the metrics
             mse.append(model_mse)
             pl.append(model_pl)
+
+            print("in DBN")
+            print(mse)
+            print(pl)
 
         return mse, pl

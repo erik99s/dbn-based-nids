@@ -34,6 +34,8 @@ class RBM(nn.Module):
         self.device = device
 
         # Initialize weights and biases
+        # W: matrix of size NVxNH
+        # vb and hb matrix of zeroes of 1xn
         self.W = nn.Parameter(torch.randn(n_visible, n_hidden) * 0.01)
         self.vb = nn.Parameter(torch.zeros(self.n_visible))
         self.hb = nn.Parameter(torch.zeros(self.n_hidden))
@@ -59,6 +61,7 @@ class RBM(nn.Module):
         return x
 
     def backward(self, h):
+        print("RBM, Entering: backward")
         """Reconstruct visible units given the hidden layer output.
 
         Parameters
@@ -142,22 +145,23 @@ class RBM(nn.Module):
             The system's energy based on input samples.
 
         """
-
+    
         # Calculate samples' activations
+        # torch.nn.functional.linear(input, weight, bias)
         activations = F.linear(samples, self.W.t(), self.hb)
 
         # Creating a Softplus function for numerical stability
         s = nn.Softplus()
 
         # Calculate the hidden term
-        h = torch.sum(s(activations), dim=1)
+        h = torch.sum(s(activations), dim=1)    
 
         # Calculate the visible term
         v = torch.mv(samples, self.vb)
 
         # Finally, gathers the system's energy
-        energy = -v - h
 
+        energy = -v - h
         return energy
 
     def pseudo_likelihood(self, samples):
@@ -198,13 +202,30 @@ class RBM(nn.Module):
         energy1 = self.energy(samples_binary)
 
         # Calculate the logarithm of the pseudo-likelihood
+        # mean(n*log(1/1+exp(-(energy1 - energy2)))
         pl = torch.mean(self.n_visible * torch.log(torch.sigmoid(energy1 - energy) + 1e-10))
+
+        """
+        print("loop 1")
+
+        print("1")
+        print(samples_binary)
+        print("2")
+        print(energy)
+        print("3")
+        print(indexes)
+        print("4")
+        print(bits)
+        print("5")
+        print(energy1)
+        print("6")
+        print(pl)
+        """
 
         return pl
 
     def fit(self, train_loader):
-        print("this is the rbm")
-        print(self.n_hidden)
+        print("RBM, Entering: fit")
         """Fits a new RBM model.
 
         Parameters
@@ -229,7 +250,6 @@ class RBM(nn.Module):
             for inputs, _ in tqdm(train_loader):
 
                 inputs = inputs.to(self.device)
-
                 # Performs the Gibbs sampling procedure
                 _, _, _, _, visible_states = self.gibbs_sampling(
                     inputs.float()
@@ -254,15 +274,19 @@ class RBM(nn.Module):
                 batch_size = inputs.size(0)
 
                 # Calculating current's batch MSE
-                batch_mse = torch.div(
-                    torch.sum(torch.pow(inputs.float() - visible_states, 2)), batch_size).detach()
 
+                # 1/z * sum(xi-xi^)²
+                batch_mse = torch.div(torch.sum(torch.pow(inputs.float() - visible_states, 2)), batch_size).detach()
+                
                 # Calculating the current's batch logarithm pseudo-likelihood
                 batch_pl = self.pseudo_likelihood(inputs.float()).detach()
 
                 # Summing up to epochs' MSE and pseudo-likelihood
                 mse += batch_mse
                 pl += batch_pl
+
+                #print(mse)
+                #print(pl)
 
             # Normalizing the MSE and pseudo-likelihood with the number of train_loader
             mse /= len(train_loader)

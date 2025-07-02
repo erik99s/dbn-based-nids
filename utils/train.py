@@ -77,10 +77,18 @@ def train(
         train_output_pred = []
         train_output_true = []
 
+        reconstruct_mse, reconstruct_vprobs = model.reconstruct(train_loader)
+        print("reconstructed")
+        print(reconstruct_mse)
+        print(reconstruct_vprobs)
+        print(reconstruct_vprobs.shape)
+
         logging.info(f"Epoch {epoch}/{num_epochs}:")
         for inputs, labels in tqdm(train_loader):
             inputs, labels = inputs.to(device), labels.to(device)
             labels = labels.squeeze(1)
+
+            print(inputs.shape)
 
             # zero the parameter gradients
             for opt in optimizer:

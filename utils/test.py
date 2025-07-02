@@ -71,6 +71,11 @@ def test(
             test_output_pred += outputs.argmax(1).cpu().tolist()
             test_output_true += labels.tolist()
             test_output_pred_prob += nn.functional.softmax(outputs, dim=0).cpu().tolist()
+    """
+    reconstruction_mse, visable_probs = model.reconstruct(test_loader)
+    print("Reconstruction MSE:", reconstruction_mse.item())
+    """
+    
 
     history['test']['total'] = test_total
     history['test']['loss'] = test_loss/test_steps
