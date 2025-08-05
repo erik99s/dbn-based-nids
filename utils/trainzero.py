@@ -3,9 +3,6 @@ import logging
 
 import torch
 
-import matplotlib.pyplot as plt
-import numpy as np
-
 
 def train(
     model: torch.nn.Module,
@@ -80,37 +77,18 @@ def train(
         train_output_pred = []
         train_output_true = []
 
-        reconstruct_mse, reconstruct_vprobs, batch_list = model.reconstruct(train_loader)
-
+        reconstruct_mse, reconstruct_vprobs = model.reconstruct(train_loader)
         print("reconstructed")
         print(reconstruct_mse)
         print(reconstruct_vprobs)
-        print(batch_list)
-        # print(reconstruct_vprobs.shape)
-        # print(reconstruct_mse.type)
-
-        plt.plot(batch_list)
-
-        # Add optional labels and title
-        plt.title("Reconstruction Error Over Time")
-        plt.xlabel("Epoch or Batch")
-        plt.ylabel("Error (MSE)")
-
-        # Display the plot
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
-
-        plt.savefig("reconstruction_error_plot.png")
-
-
+        print(reconstruct_vprobs.shape)
 
         logging.info(f"Epoch {epoch}/{num_epochs}:")
         for inputs, labels in tqdm(train_loader):
             inputs, labels = inputs.to(device), labels.to(device)
             labels = labels.squeeze(1)
 
-            # print(inputs.shape)
+            print(inputs.shape)
 
             # zero the parameter gradients
             for opt in optimizer:

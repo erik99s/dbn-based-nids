@@ -4,6 +4,11 @@ import logging
 import torch
 import torch.nn as nn
 
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+
 from models.RBM import RBM
 
 
@@ -95,6 +100,7 @@ class DBN(nn.Module):
 
         # Resetting MSE to zero
         mse = 0
+        batch_list = []
 
         # Defining the batch size as the amount of input_data in the dataset
         batch_size = len(data_loader.dataset)
@@ -102,7 +108,7 @@ class DBN(nn.Module):
         # For every batch
         for input_data, _ in tqdm(data_loader):
 
-            print(input_data.shape)
+            # print(input_data.shape)
 
             # Applying the initial hidden probabilities as the input_data
             batch_size = input_data.size(0)
@@ -133,14 +139,19 @@ class DBN(nn.Module):
             # Calculating current's batch reconstruction MSE
             batch_mse = torch.div(
                 torch.sum(torch.pow(input_data - visible_states, 2)), batch_size)
-
+            
             # Summing up to reconstruction's MSE
             mse += batch_mse
+            # .item() makes it a float
+            batch_list.append(batch_mse.item())
+
 
         # Normalizing the MSE with the number of batches
+
+ 
         mse /= len(data_loader)
 
-        return mse, visible_probs
+        return mse, visible_probs, batch_list
 
     def forward(self, x):
         """Performs a forward pass over the data.
