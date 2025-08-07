@@ -250,7 +250,7 @@ if __name__ == "__main__":
 
     
     # Save the results
-    X_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed', 'pretrain/pretrain.pkl'))
+    X_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed', 'pretrain/pretrain_features.pkl'))
     X_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_features.pkl'))
     X_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_features.pkl'))
     X_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_features.pkl'))
