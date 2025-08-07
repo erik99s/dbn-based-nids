@@ -95,10 +95,8 @@ def main(config):
     4         8
     """
 
-    labels = ['Benign', 'PortScan', 'DoS', 'Bot', 'Brute Force', 'Zero Day']
+    labels = ['Benign', 'PortScan', 'DoS', 'Bot', 'Brute Force']
 
-    
-    """
     logging.info('Training Set -- Classification Report')
     logging.info(classification_report(
         y_true=train_output_true,
@@ -132,7 +130,6 @@ def main(config):
         filename=f'{config["name"]}_train_confusion_matrix.pdf'
     )
 
-    """
     
 
     logging.info(f'Evaluate {config["name"]} model')
@@ -147,6 +144,8 @@ def main(config):
     test_output_true = test_history["test"]["output_true"]
     test_output_pred = test_history["test"]["output_pred"]
     test_output_pred_prob = test_history["test"]["output_pred_prob"]
+
+    labels = ['Benign', 'PortScan', 'DoS', 'Bot', 'Brute Force', 'Zero Day']
 
     ## Testing Set results
     logging.info(f'Testing Set -- Classification Report {config["name"]}\n')
