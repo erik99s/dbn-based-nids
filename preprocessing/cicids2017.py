@@ -91,7 +91,6 @@ class CICIDS2017Preprocessor(object):
     def group_labels(self):
         """"""
         # Proposed Groupings
-
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'PortScan', 
@@ -139,13 +138,9 @@ class CICIDS2017Preprocessor(object):
         """"""
         # Used to for only benign traffic
         
-        self.benign = self.data[self.data['label_category'] != 'Benign' ]
-
-        self.labels = self.benign['label_category']
-        self.features = self.benign.drop(labels=['label', 'label_category'], axis=1)
-
-        print(self.benign['label_category'].unique())
-      
+        self.labels = self.data['label_category']
+        self.features = self.data.drop(labels=['label', 'label_category'], axis=1) 
+        
         if self.tp == 0:
             X_train, X_test, y_train, y_test = train_test_split(
                 self.features,
@@ -168,6 +163,10 @@ class CICIDS2017Preprocessor(object):
         
         categorical_features = self.features.select_dtypes(exclude=["number"]).columns
         numeric_features = self.features.select_dtypes(exclude=[object]).columns
+
+        print(self.features.shape)
+        print(categorical_features.shape)
+        print(numeric_features.shape)
 
         preprocessor = ColumnTransformer(transformers=[
             ('categoricals', OneHotEncoder(drop='first', sparse=False, handle_unknown='error'), categorical_features),

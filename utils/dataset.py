@@ -36,6 +36,13 @@ class CICIDSDataset(Dataset):
 
 def get_dataset(data_path: str, balanced: bool):
 
+    pretrain_data = CICIDSDataset(
+        features_file=f"{data_path}/processed/pretrain/pretrain_features.pkl",
+        target_file=f"{data_path}/processed/pretrain/pretrain_labels.pkl",
+        transform=torch.tensor,
+        target_transform=torch.tensor
+    )
+
     if balanced:
         train_data = CICIDSDataset(
             features_file=f"{data_path}/processed/train/train_features_balanced.pkl",
@@ -65,16 +72,21 @@ def get_dataset(data_path: str, balanced: bool):
         target_transform=torch.tensor
     )
 
-    return train_data, val_data, test_data
+    return pretrain_data, train_data, val_data, test_data
 
 
 def load_data(data_path: str, balanced: bool, batch_size: int):
     """Load training, validation and test set."""
 
     # Get the datasets
-    train_data, val_data, test_data = get_dataset(data_path=data_path, balanced=balanced)
+    pretrain_data, train_data, val_data, test_data = get_dataset(data_path=data_path, balanced=balanced)
 
     # Create the dataloaders - for training, validation and testing
+    pretrain_data = torch.utils.data.DataLoader(
+        dataset = pretrain_data,
+        batch_size = batch_size,
+        shuffle = True
+    )
     train_loader = torch.utils.data.DataLoader(
         dataset=train_data,
         batch_size=batch_size,
@@ -91,4 +103,4 @@ def load_data(data_path: str, balanced: bool, batch_size: int):
         shuffle=False
     )
 
-    return train_loader, valid_loader, test_loader
+    return pretrain_data, train_loader, valid_loader, test_loader

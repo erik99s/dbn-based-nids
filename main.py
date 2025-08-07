@@ -46,7 +46,7 @@ def main(config):
     print(model)
 
     logging.info("Loading dataset...")
-    train_loader, valid_loader, test_loader = dataset.load_data(
+    pretrain_loader, train_loader, valid_loader, test_loader = dataset.load_data(
         data_path=DATA_DIR,
         balanced=config["data_loader"]["args"]["balanced"],
         batch_size=config["data_loader"]["args"]["batch_size"],
@@ -62,7 +62,7 @@ def main(config):
         
         # Pre-train the DBN model
         logging.info("Start pre-training the model...")
-        model.fit(train_loader)
+        model.fit(pretrain_loader)
     else:
         optimizer = [getattr(torch.optim, config["optimizer"]["type"])(params=model.parameters(), **config["optimizer"]["args"])]
 
@@ -95,9 +95,10 @@ def main(config):
     4         8
     """
 
-    labels = ["Botnet ARES", "Brute Force", "DoS/DDoS","Infiltration", "PortScan", "Web Attack"]
-    # labels = ['Benign', 'ZeroDay']
+    labels = ['Benign', 'PortScan', 'DoS', 'Bot', 'Brute Force', 'Zero Day']
 
+    
+    """
     logging.info('Training Set -- Classification Report')
     logging.info(classification_report(
         y_true=train_output_true,
@@ -130,6 +131,9 @@ def main(config):
         save_dir=IMAGE_DIR,
         filename=f'{config["name"]}_train_confusion_matrix.pdf'
     )
+
+    """
+    
 
     logging.info(f'Evaluate {config["name"]} model')
     test_history = test(

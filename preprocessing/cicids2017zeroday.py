@@ -6,7 +6,7 @@ import os
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder, QuantileTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
-
+import numpy as np
 
 DATA_DIR  = os.path.join(os.path.abspath("."), "data")
 
@@ -132,96 +132,93 @@ class CICIDS2017Preprocessor(object):
         self.data['label_category'] = self.data['label'].map(lambda x: attack_group[x])
         
     def train_valid_test_split(self):
-        """"""
+        """Splits data into:
+        - X_pretrain: Benign-only samples for unsupervised pretraining.
+        - (X_train, y_train): For fine-tuning (excluding ZeroDay).
+        - (X_val, y_val): For validation during fine-tuning.
+        - (X_test, y_test): Full test set including ZeroDay for final evaluation.
+        """
 
-        print(self.data.shape)
-
-        labelsToRemove = ['PortScan', 'DoS', 'Brute Force', 'Bot']
-        self.data = self.data[~self.data['label_category'].isin(labelsToRemove)]
-
-        print(self.data.shape)
-
-        self.datatrain = self.data[self.data['label_category'] != 'Zero Day']
-
-
-        self.labelstrain = self.datatrain['label_category']
-        self.featurestrain = self.datatrain.drop(labels=['label', 'label_category'], axis=1)
-
-        self.labels = self.data['label_category']
+        
+        # knownAttacks = ['PortScan', 'DoS', 'Brute Force', 'Bot']
+        #  = self.data[~self.data['label_category'].isin(knownAttacks)]
         self.features = self.data.drop(labels=['label', 'label_category'], axis=1)
+        # pretrain only containing benign traffic 
+        self.pretrain = self.data[self.data['label_category'] == 'Benign']
 
+        # train excluding zero-day attacks
+        self.train = self.data[self.data['label_category'] != 'ZeroDay']  
+
+        # generating pretraining
+        y_pretrain = self.pretrain['label_category']
+        X_pretrain = self.pretrain.drop(labels=['label', 'label_category'], axis=1)
+    
+        self.trainLabels = self.train['label_category']
+        self.trainFeatures = self.train.drop(labels=['label', 'label_category'], axis=1)
+
+        #split into fine-tuning data and validation
         X_train, X_val, y_train, y_val = train_test_split(
-            self.featurestrain,
-            self.labelstrain,
+            self.trainFeatures,
+            self.trainLabels,
             test_size=self.validation_size,   
             random_state=42,
-            stratify=self.labelstrain
+            stratify=self.trainLabels
         )
 
-        _, X_test, _, y_test = train_test_split(
-            self.features,
-            self.labels,
-            test_size=self.testing_size, 
-            random_state=42
-        )
+        y_test = self.data['label_category']
+        X_test = self.data.drop(labels=['label', 'label_category'], axis=1)
 
+        print(y_test.value_counts())
 
-        return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+        del self.data
+
+        return (X_pretrain, y_pretrain), (X_train, y_train), (X_val, y_val), (X_test, y_test)
     
-    def scale(self, training_set, validation_set, testing_set):
+    def scale(self, pretraining_set, training_set, validation_set, testing_set):
         """"""
-        (X_train, y_train), (X_val, y_val), (X_test, y_test) = training_set, validation_set, testing_set
+        print("in here")
+        (X_pretrain,y_pretrain), (X_train, y_train), (X_val, y_val), (X_test, y_test) = pretraining_set, training_set, validation_set, testing_set
         
         categorical_features = self.features.select_dtypes(exclude=["number"]).columns
         numeric_features = self.features.select_dtypes(exclude=[object]).columns
+
+        print("here")
 
         preprocessor = ColumnTransformer(transformers=[
             ('categoricals', OneHotEncoder(drop='first', sparse=False, handle_unknown='ignore'), categorical_features),
             ('numericals', QuantileTransformer(), numeric_features)
         ])
 
+        print("here")
         # Preprocess the features
         # columns = numeric_features.tolist()
 
-        X_train = pd.DataFrame(preprocessor.fit_transform(X_train))
-        X_val = pd.DataFrame(preprocessor.transform(X_val))
-        X_test = pd.DataFrame(preprocessor.transform(X_test))
+        X_pretrain = pd.DataFrame(preprocessor.fit_transform(X_pretrain)).astype(np.float32)
+        print("here")
+        X_train = pd.DataFrame(preprocessor.transform(X_train)).astype(np.float32)
+        print("here")
+        X_val = pd.DataFrame(preprocessor.transform(X_val)).astype(np.float32)
+        print("here")
+        X_test = pd.DataFrame(preprocessor.transform(X_test)).astype(np.float32)
+        print("here")
+
+        print("here")
 
         # Preprocess the labels
-
-        all_labels = pd.concat([y_train, y_val, y_test])
+        all_labels = pd.concat([y_pretrain, y_train, y_val, y_test])
         all_classes = sorted(all_labels.unique())
 
         le = LabelEncoder()
         le.classes_ = np.array(all_classes)
 
-
+        y_pretrain = pd.DataFrame(le.transform(y_train), columns=["label"])
         y_train = pd.DataFrame(le.transform(y_train), columns=["label"])
         y_val = pd.DataFrame(le.transform(y_val), columns=["label"])
         y_test = pd.DataFrame(le.transform(y_test), columns=["label"])
 
-    
-        """
-        Printing the following lines of code gives the result below
-
-        print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
-        print(f"Train: {len(y_train)}, Val: {len(y_val)}, Test: {len(y_test)}")
-
-        print(y_test['label'].value_counts())
-
-            (2830743, 78)
-            (2425727, 78)
-            (2425727, 68)
-            (2425727, 50)
-            Train: 1628980, Val: 407245, Test: 407245
-            Train: 1628980, Val: 407245, Test: 407245
-            0    407100
-            1       145
-        """
 
 
-
-        return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+        return (X_pretrain, y_pretrain), (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 
 if __name__ == "__main__":
@@ -235,34 +232,30 @@ if __name__ == "__main__":
     # Read datasets
     cicids2017.read_data()
 
-    print(cicids2017.data.shape)
-
     # Remove NaN, -Inf, +Inf, Duplicates
     cicids2017.remove_duplicate_values()
     cicids2017.remove_missing_values
     cicids2017.remove_infinite_values()
 
-    print(cicids2017.data.shape)
-
     # Drop constant & correlated features
     cicids2017.remove_constant_features()
-    print(cicids2017.data.shape)
     cicids2017.remove_correlated_features()
-    print(cicids2017.data.shape)
 
     # Create new label category
     cicids2017.group_labels()
 
     # Split & Normalise data sets
-    training_set, validation_set, testing_set            = cicids2017.train_valid_test_split()
-    (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(training_set, validation_set, testing_set)
+    pretraining_set, training_set, validation_set, testing_set            = cicids2017.train_valid_test_split()
+    (X_pretrain, y_pretrain), (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(pretraining_set, training_set, validation_set, testing_set)
 
     
     # Save the results
+    X_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed', 'pretrain/pretrain.pkl'))
     X_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_features.pkl'))
     X_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_features.pkl'))
     X_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_features.pkl'))
 
+    y_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed', 'pretrain/pretrain_labels.pkl'))
     y_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_labels.pkl'))
     y_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_labels.pkl'))
     y_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_labels.pkl'))

@@ -104,6 +104,8 @@ class DBN(nn.Module):
 
         # Defining the batch size as the amount of input_data in the dataset
         batch_size = len(data_loader.dataset)
+        print("1st")
+        print(batch_size)
 
         # For every batch
         for input_data, _ in tqdm(data_loader):
@@ -113,6 +115,8 @@ class DBN(nn.Module):
             # Applying the initial hidden probabilities as the input_data
             batch_size = input_data.size(0)
             hidden_probs = input_data
+            print("2nd")
+            print(batch_size)
 
             # For every possible model (RBM)
             for model in self.models:

@@ -4,6 +4,9 @@ import logging
 import torch
 import torch.nn as nn
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def test(
     model: torch.nn.Module,
@@ -32,6 +35,32 @@ def test(
     """
 
     model.eval()
+
+    reconstruct_mse, reconstruct_vprobs, batch_list = model.reconstruct(test_loader)
+
+    print("reconstructed")
+    print(reconstruct_mse)
+    print(reconstruct_vprobs)
+    print(batch_list)
+    # print(reconstruct_vprobs.shape)
+    # print(reconstruct_mse.type)
+
+    plt.figure()
+    plt.plot(batch_list)
+
+    # Add optional labels and title
+    plt.title("Reconstruction Error Over Time")
+    plt.xlabel("Batch")
+    plt.ylabel("Error (MSE)")
+
+    # Display the plot
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    plt.savefig("reconstruction_error_plot.png")
+    plt.close()
+
 
     history = {
         'test': {

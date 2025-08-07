@@ -14,6 +14,7 @@ $(BIN)/activate: requirements.txt
 
 
 init: $(BIN)/activate
+	mkdir -p ./data/processed/pretrain
 	mkdir -p ./data/processed/test
 	mkdir -p ./data/processed/train
 	mkdir -p ./data/processed/val

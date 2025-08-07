@@ -115,50 +115,15 @@ def train(
             train_output_pred += outputs.argmax(1).cpu().tolist()
             train_output_true += labels.tolist()
 
-        ########################################
-        ##             VALID LOOP             ##
-        ########################################
-        model.eval()
-
-        val_loss = 0.0
-        val_steps = 0
-        val_total = 0
-        val_correct = 0
-
-        val_output_pred = []
-        val_output_true = []
-
-        with torch.no_grad():
-            for inputs, labels in valid_loader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                labels = labels.squeeze(1)
-
-                outputs = model(inputs)
-
-                loss = criterion(outputs, labels)
-                val_loss += loss.cpu().numpy()
-                val_steps += 1
-
-                _, predicted = torch.max(outputs.data, 1)
-                val_total += labels.size(0)
-                val_correct += (predicted == labels).sum().item()
-
-                val_output_pred += outputs.argmax(1).cpu().tolist()
-                val_output_true += labels.tolist()
-
+        
         history['train']['total'] = train_total
         history['train']['loss'].append(train_loss/train_steps)
         history['train']['accuracy'].append(train_correct/train_total)
         history['train']['output_pred'] = train_output_pred
         history['train']['output_true'] = train_output_true
 
-        history['valid']['total'] = val_total
-        history['valid']['loss'].append(val_loss/val_steps)
-        history['valid']['accuracy'].append(val_correct/val_total)
-        history['valid']['output_pred'] = val_output_pred
-        history['valid']['output_true'] = val_output_true
 
-        logging.info(f'loss: {train_loss/train_steps} - acc: {train_correct/train_total} - val_loss: {val_loss/val_steps} - val_acc: {val_correct/val_total}')
+        logging.info(f'loss: {train_loss/train_steps} - acc: {train_correct/train_total}')
 
     logging.info(f"Finished Training")
 
