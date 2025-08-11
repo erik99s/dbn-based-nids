@@ -4,7 +4,7 @@
         "type": "DBN",
         "args": {
             "n_visible": 49,
-            "n_hidden": [75, 33, 18, 12, 2],
+            "n_hidden": [75, 33, 18, 12, 5],
             "n_classes": 6,
             "learning_rate": [0.01, 0.01, 0.01, 0.01, 0.01],
             "momentum": [0.9, 0.9, 0.9, 0.9, 0.9],
@@ -36,6 +36,6 @@
         }
     },
     "trainer": {
-        "num_epochs": 1
+        "num_epochs": 8
     }
 }

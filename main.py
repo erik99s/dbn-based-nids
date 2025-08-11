@@ -95,14 +95,16 @@ def main(config):
     4         8
     """
 
-    labels = ['Benign', 'PortScan', 'DoS', 'Bot', 'Brute Force']
+    labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan']
 
+    """
     logging.info('Training Set -- Classification Report')
     logging.info(classification_report(
         y_true=train_output_true,
         y_pred=train_output_pred,
         target_names=labels
     ))
+    """
     
     visualisation.plot_confusion_matrix(
         y_true=train_output_true,
@@ -114,12 +116,14 @@ def main(config):
     )
 
     ## Validation Set results
+    """
     logging.info('Validation Set -- Classification Report')
     logging.info(classification_report(
         y_true=valid_output_true,
         y_pred=valid_output_pred,
         target_names=labels
     ))
+    """
 
     visualisation.plot_confusion_matrix(
         y_true=valid_output_true,
@@ -130,7 +134,6 @@ def main(config):
         filename=f'{config["name"]}_train_confusion_matrix.pdf'
     )
 
-    
 
     logging.info(f'Evaluate {config["name"]} model')
     test_history = test(
@@ -145,8 +148,8 @@ def main(config):
     test_output_pred = test_history["test"]["output_pred"]
     test_output_pred_prob = test_history["test"]["output_pred_prob"]
 
-    labels = ['Benign', 'PortScan', 'DoS', 'Bot', 'Brute Force', 'Zero Day']
-
+    labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan', 'ZeroDay']
+    
     ## Testing Set results
     logging.info(f'Testing Set -- Classification Report {config["name"]}\n')
     logging.info(classification_report(

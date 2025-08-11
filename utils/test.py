@@ -34,19 +34,17 @@ def test(
 
     """
 
+    
     model.eval()
 
-    reconstruct_mse, reconstruct_vprobs, batch_list = model.reconstruct(test_loader)
+    """
+    reconstruct_mse, reconstruct_vprobs, batch_list_mse = model.reconstruct(test_loader)
 
-    print("reconstructed")
-    print(reconstruct_mse)
-    print(reconstruct_vprobs)
-    print(batch_list)
     # print(reconstruct_vprobs.shape)
     # print(reconstruct_mse.type)
 
     plt.figure()
-    plt.plot(batch_list)
+    plt.plot(batch_list_mse)
 
     # Add optional labels and title
     plt.title("Reconstruction Error Over Time")
@@ -60,7 +58,7 @@ def test(
 
     plt.savefig("reconstruction_error_plot.png")
     plt.close()
-
+    """
 
     history = {
         'test': {

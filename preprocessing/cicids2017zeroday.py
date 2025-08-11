@@ -126,6 +126,24 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'ZeroDay',
             'Infiltration': 'ZeroDay'
         }
+
+        attack_group = {
+            'BENIGN': 'Benign',
+            'PortScan': 'Known', 
+            'DDoS': 'Known',
+            'DoS Hulk': 'Known',
+            'DoS GoldenEye': 'Known',
+            'DoS slowloris': 'Known', 
+            'DoS Slowhttptest': 'Known',
+            'Heartbleed': 'ZeroDay',
+            'FTP-Patator': 'Known',
+            'SSH-Patator': 'Known',
+            'Bot': 'Known',
+            'Web Attack � Brute Force': 'Known',
+            'Web Attack � Sql Injection': 'ZeroDay',
+            'Web Attack � XSS': 'ZeroDay',
+            'Infiltration': 'ZeroDay'
+        }
         
 
         # Create grouped label column
@@ -200,7 +218,6 @@ class CICIDS2017Preprocessor(object):
         X_val = pd.DataFrame(preprocessor.transform(X_val)).astype(np.float32)
         print("here")
         X_test = pd.DataFrame(preprocessor.transform(X_test)).astype(np.float32)
-        print("here")
 
         print("here")
 
@@ -216,6 +233,10 @@ class CICIDS2017Preprocessor(object):
         y_val = pd.DataFrame(le.transform(y_val), columns=["label"])
         y_test = pd.DataFrame(le.transform(y_test), columns=["label"])
 
+        print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
+        print(f"Train: {len(y_train)}, Val: {len(y_val)}, Test: {len(y_test)}")
+
+        print(y_test['label'].value_counts())
 
 
         return (X_pretrain, y_pretrain), (X_train, y_train), (X_val, y_val), (X_test, y_test)
@@ -250,12 +271,12 @@ if __name__ == "__main__":
 
     
     # Save the results
-    X_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed', 'pretrain/pretrain_features.pkl'))
-    X_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_features.pkl'))
-    X_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_features.pkl'))
-    X_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_features.pkl'))
+    X_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed2', 'pretrain/pretrain_features.pkl'))
+    X_train.to_pickle(os.path.join(DATA_DIR, 'processed2', 'train/train_features.pkl'))
+    X_val.to_pickle(os.path.join(DATA_DIR, 'processed2', 'val/val_features.pkl'))
+    X_test.to_pickle(os.path.join(DATA_DIR, 'processed2', 'test/test_features.pkl'))
 
-    y_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed', 'pretrain/pretrain_labels.pkl'))
-    y_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_labels.pkl'))
-    y_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_labels.pkl'))
-    y_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_labels.pkl'))
+    y_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed2', 'pretrain/pretrain_labels.pkl'))
+    y_train.to_pickle(os.path.join(DATA_DIR, 'processed2', 'train/train_labels.pkl'))
+    y_val.to_pickle(os.path.join(DATA_DIR, 'processed2', 'val/val_labels.pkl'))
+    y_test.to_pickle(os.path.join(DATA_DIR, 'processed2', 'test/test_labels.pkl'))
