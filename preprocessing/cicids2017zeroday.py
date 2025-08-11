@@ -108,7 +108,7 @@ class CICIDS2017Preprocessor(object):
             'Infiltration': 'Infiltration'
         }
         
-        """
+        
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'PortScan', 
@@ -126,6 +126,7 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'ZeroDay',
             'Infiltration': 'ZeroDay'
         }
+        """
 
         attack_group = {
             'BENIGN': 'Benign',
@@ -185,7 +186,9 @@ class CICIDS2017Preprocessor(object):
 
         y_test = self.data['label_category']
         X_test = self.data.drop(labels=['label', 'label_category'], axis=1)
-
+        
+        print(y_pretrain.value_counts())
+        print(y_train.value_counts())
         print(y_test.value_counts())
 
         del self.data
