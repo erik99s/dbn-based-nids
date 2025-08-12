@@ -18,7 +18,8 @@
         "type": "CICIDS2017DataLoader",
         "args": {
             "batch_size": 128,
-            "balanced": false
+            "balanced": false,
+            "knownAttacksGrouped": false 
         }
     },
     "optimizer": {

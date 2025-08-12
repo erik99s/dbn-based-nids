@@ -108,7 +108,7 @@ class CICIDS2017Preprocessor(object):
             'Infiltration': 'Infiltration'
         }
         
-        
+        """
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'PortScan', 
@@ -126,8 +126,8 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'ZeroDay',
             'Infiltration': 'ZeroDay'
         }
-        """
 
+        """
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'Known', 
@@ -145,7 +145,7 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'ZeroDay',
             'Infiltration': 'ZeroDay'
         }
-        
+        """
 
         # Create grouped label column
         self.data['label_category'] = self.data['label'].map(lambda x: attack_group[x])
@@ -197,32 +197,25 @@ class CICIDS2017Preprocessor(object):
     
     def scale(self, pretraining_set, training_set, validation_set, testing_set):
         """"""
-        print("in here")
         (X_pretrain,y_pretrain), (X_train, y_train), (X_val, y_val), (X_test, y_test) = pretraining_set, training_set, validation_set, testing_set
         
         categorical_features = self.features.select_dtypes(exclude=["number"]).columns
         numeric_features = self.features.select_dtypes(exclude=[object]).columns
 
-        print("here")
 
         preprocessor = ColumnTransformer(transformers=[
             ('categoricals', OneHotEncoder(drop='first', sparse=False, handle_unknown='ignore'), categorical_features),
             ('numericals', QuantileTransformer(), numeric_features)
         ])
 
-        print("here")
         # Preprocess the features
         # columns = numeric_features.tolist()
 
         X_pretrain = pd.DataFrame(preprocessor.fit_transform(X_pretrain)).astype(np.float32)
-        print("here")
         X_train = pd.DataFrame(preprocessor.transform(X_train)).astype(np.float32)
-        print("here")
         X_val = pd.DataFrame(preprocessor.transform(X_val)).astype(np.float32)
-        print("here")
         X_test = pd.DataFrame(preprocessor.transform(X_test)).astype(np.float32)
 
-        print("here")
 
         # Preprocess the labels
         all_labels = pd.concat([y_pretrain, y_train, y_val, y_test])
@@ -239,6 +232,9 @@ class CICIDS2017Preprocessor(object):
         print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
         print(f"Train: {len(y_train)}, Val: {len(y_val)}, Test: {len(y_test)}")
 
+        print(y_pretrain['label'].value.counts())
+        print(y_train['label'].value_counts())
+        print(y_val['label'].value_counts())
         print(y_test['label'].value_counts())
 
 
@@ -274,12 +270,12 @@ if __name__ == "__main__":
 
     
     # Save the results
-    X_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed2', 'pretrain/pretrain_features.pkl'))
-    X_train.to_pickle(os.path.join(DATA_DIR, 'processed2', 'train/train_features.pkl'))
-    X_val.to_pickle(os.path.join(DATA_DIR, 'processed2', 'val/val_features.pkl'))
-    X_test.to_pickle(os.path.join(DATA_DIR, 'processed2', 'test/test_features.pkl'))
+    X_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed', 'pretrain/pretrain_features.pkl'))
+    X_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_features.pkl'))
+    X_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_features.pkl'))
+    X_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_features.pkl'))
 
-    y_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed2', 'pretrain/pretrain_labels.pkl'))
-    y_train.to_pickle(os.path.join(DATA_DIR, 'processed2', 'train/train_labels.pkl'))
-    y_val.to_pickle(os.path.join(DATA_DIR, 'processed2', 'val/val_labels.pkl'))
-    y_test.to_pickle(os.path.join(DATA_DIR, 'processed2', 'test/test_labels.pkl'))
+    y_pretrain.to_pickle(os.path.join(DATA_DIR, 'processed', 'pretrain/pretrain_labels.pkl'))
+    y_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_labels.pkl'))
+    y_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_labels.pkl'))
+    y_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_labels.pkl'))

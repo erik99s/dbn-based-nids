@@ -95,8 +95,8 @@ def main(config):
     4         8
     """
 
-    # labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan']
-    labels = ['Benign', 'Known']
+    labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan']
+    # labels = ['Benign', 'Known']
 
     """
     logging.info('Training Set -- Classification Report')
@@ -149,8 +149,8 @@ def main(config):
     test_output_pred = test_history["test"]["output_pred"]
     test_output_pred_prob = test_history["test"]["output_pred_prob"]
 
-    # labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan', 'ZeroDay']
-    labels = ['Benign', 'Known', 'ZeroDay']
+    labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan', 'ZeroDay']
+    # labels = ['Benign', 'Known', 'ZeroDay']
     
     ## Testing Set results
     logging.info(f'Testing Set -- Classification Report {config["name"]}\n')
