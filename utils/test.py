@@ -80,13 +80,16 @@ def test(
     test_output_true = []
     test_output_pred_prob = []
 
+    reconstruction_mse, visable_probs = model.reconstruct(test_loader)
+    print("Reconstruction MSE:", reconstruction_mse.item())
+
     with torch.no_grad():
         for (inputs, labels) in tqdm(test_loader):
             inputs, labels = inputs.to(device), labels.to(device)
             labels = labels.squeeze(1)
 
             outputs = model(inputs)
-            
+
             loss = criterion(outputs, labels)
             test_loss += loss.cpu().item()
             test_steps += 1
@@ -98,10 +101,6 @@ def test(
             test_output_pred += outputs.argmax(1).cpu().tolist()
             test_output_true += labels.tolist()
             test_output_pred_prob += nn.functional.softmax(outputs, dim=0).cpu().tolist()
-    """
-    reconstruction_mse, visable_probs = model.reconstruct(test_loader)
-    print("Reconstruction MSE:", reconstruction_mse.item())
-    """
     
 
     history['test']['total'] = test_total

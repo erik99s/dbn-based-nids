@@ -136,7 +136,7 @@ def load_data(data_path: str, balanced: bool, batch_size: int, knownAttacksGroup
     )
     test_loader = torch.utils.data.DataLoader(
         dataset=test_data,
-        batch_size=batch_size,
+        batch_size=1,
         shuffle=False
     )
 

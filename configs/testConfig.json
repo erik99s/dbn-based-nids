@@ -1,0 +1,39 @@
+{ 
+    "name": "testConfig",
+    "model": {
+        "type": "DBN",
+        "args": {
+            "n_visible": 49,
+            "n_hidden": [81, 42, 26, 13],
+            "n_classes": 6,
+            "learning_rate": [0.01, 0.01, 0.01, 0.01],
+            "momentum": [0.9, 0.9, 0.9, 0.9],
+            "decay": [0, 0, 0, 0],
+            "batch_size": [64, 64, 64, 64],
+            "num_epochs": [2, 2, 2, 2],
+            "k": [1, 1, 1, 1]
+        }
+    },
+    "data_loader": {
+        "type": "CICIDS2017DataLoader",
+        "args": {
+            "batch_size": 128,
+            "balanced": false,
+            "knownAttacksGrouped": false 
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.001,
+            "weight_decay": 0,
+            "amsgrad": false
+        }
+    },
+    "loss": {
+        "type": "CrossEntropyLoss",
+        "args": {
+            "reduction": "mean"
+        }
+    }
+}
