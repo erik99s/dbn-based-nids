@@ -62,7 +62,7 @@ def main(config):
         
         # Pre-train the DBN model
         logging.info("Start pre-training the model...")
-        model.fit(pretrain_loader)
+        model.fit(train_loader)
     else:
         optimizer = [getattr(torch.optim, config["optimizer"]["type"])(params=model.parameters(), **config["optimizer"]["args"])]
 
@@ -95,7 +95,8 @@ def main(config):
     4         8
     """
 
-    labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan']
+
+    # labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan']
     # labels = ['Benign', 'Known']
 
     """

@@ -184,15 +184,22 @@ class CICIDS2017Preprocessor(object):
             stratify=self.trainLabels
         )
 
-        test = self.data[self.data['label_category'] == 'Benign'].sample(n=50000, random_state=42)
-        test = test[test['label_category'] == 'DoS'].sameple(n=20000, random_state=42)
-        test = test[test['label_category'] == 'PortScan'].sameple(n=10000, random_state=42)
+        # scaling testset
+        benign = self.data[self.data['label_category'] == 'Benign'].sample(n=50000, random_state=42)
+        dos = self.data[self.data['label_category'] == 'DoS'].sample(n=20000, random_state=42)
+        portscan = self.data[self.data['label_category'] == 'PortScan'].sample(n=10000, random_state=42)
+        brute = self.data[self.data['label_category'] == 'Brute Force'].sample(n=5000, random_state=42)
+        bot = self.data[self.data['label_category'] == 'Bot'].sample(n=1000, random_state=42)
+        zeroday = self.data[self.data['label_category'] == 'ZeroDay']
+
+        
+        test = pd.concat([benign, dos, portscan, brute, bot, zeroday])
 
         y_test = test['label_category']
         X_test = test.drop(labels=['label', 'label_category'], axis=1)
         
         print(y_pretrain.value_counts())
-        print(y_train.value_counts())
+        print(y_train.value_counts())   
         print(y_test.value_counts())
 
         del self.data
@@ -228,7 +235,7 @@ class CICIDS2017Preprocessor(object):
         le = LabelEncoder()
         le.classes_ = np.array(all_classes)
 
-        y_pretrain = pd.DataFrame(le.transform(y_train), columns=["label"])
+        y_pretrain = pd.DataFrame(le.transform(y_pretrain), columns=["label"])
         y_train = pd.DataFrame(le.transform(y_train), columns=["label"])
         y_val = pd.DataFrame(le.transform(y_val), columns=["label"])
         y_test = pd.DataFrame(le.transform(y_test), columns=["label"])
@@ -236,7 +243,7 @@ class CICIDS2017Preprocessor(object):
         print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
         print(f"Train: {len(y_train)}, Val: {len(y_val)}, Test: {len(y_test)}")
 
-        print(y_pretrain['label'].value.counts())
+        print(y_pretrain['label'].value_counts())
         print(y_train['label'].value_counts())
         print(y_val['label'].value_counts())
         print(y_test['label'].value_counts())

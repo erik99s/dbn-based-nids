@@ -79,24 +79,60 @@ def test(
     test_output_pred = []
     test_output_true = []
     test_output_pred_prob = []
-
-    reconstruction_mse, visable_probs = model.reconstruct(test_loader)
+    
+    reconstruction_mse, visable_probs, batch_list = model.reconstruct(test_loader)
     print("Reconstruction MSE:", reconstruction_mse.item())
+    # print(batch_list)
+
+    
+    print(max(batch_list))
+    print(min(batch_list))
+
+    overThreshhold = reconstruction_mse+reconstruction_mse*0.5
+    underThreshhold = reconstruction_mse-reconstruction_mse*0.5
+
+    print(overThreshhold)
+    print(underThreshhold)
+
+    under = 0
+    middle = 0 
+    over = 0
+
+    for element in batch_list:
+        if element < underThreshhold:
+            under += 1
+        elif element > overThreshhold:
+            over += 1
+        else:
+            middle += 1
+        
+
+    print(over)
+    print(under)
+    print(middle)
+
 
     with torch.no_grad():
         for (inputs, labels) in tqdm(test_loader):
             inputs, labels = inputs.to(device), labels.to(device)
             labels = labels.squeeze(1)
 
+            mse, _ = model.reconstructOne(inputs)
             outputs = model(inputs)
 
-            loss = criterion(outputs, labels)
-            test_loss += loss.cpu().item()
-            test_steps += 1
+            if mse < underThreshhold or mse > overThreshhold: 
+                predicted == "ZeroDay" 
 
-            _, predicted = torch.max(outputs.data, 1)
+            else:
+                loss = criterion(outputs, labels)
+                test_loss += loss.cpu().item()
+                test_steps += 1
+
+                _, predicted = torch.max(outputs.data, 1)
+
             test_total += labels.size(0)
             test_correct += (predicted == labels).sum().item()
+
 
             test_output_pred += outputs.argmax(1).cpu().tolist()
             test_output_true += labels.tolist()

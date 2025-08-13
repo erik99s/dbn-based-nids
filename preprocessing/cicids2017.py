@@ -91,6 +91,7 @@ class CICIDS2017Preprocessor(object):
     def group_labels(self):
         """"""
         # Proposed Groupings
+        """
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'PortScan', 
@@ -126,7 +127,6 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'Zero Day',
             'Infiltration': 'Zero Day'
         }
-        """
         
         
         
@@ -239,10 +239,10 @@ if __name__ == "__main__":
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(training_set, validation_set, testing_set)
     
     # Save the results
-    X_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_features.pkl'))
-    X_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_features.pkl'))
-    X_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_features.pkl'))
+    X_train.to_pickle(os.path.join(DATA_DIR, 'processed3', 'train/train_features.pkl'))
+    X_val.to_pickle(os.path.join(DATA_DIR, 'processed3', 'val/val_features.pkl'))
+    X_test.to_pickle(os.path.join(DATA_DIR, 'processed3', 'test/test_features.pkl'))
 
-    y_train.to_pickle(os.path.join(DATA_DIR, 'processed', 'train/train_labels.pkl'))
-    y_val.to_pickle(os.path.join(DATA_DIR, 'processed', 'val/val_labels.pkl'))
-    y_test.to_pickle(os.path.join(DATA_DIR, 'processed', 'test/test_labels.pkl'))
+    y_train.to_pickle(os.path.join(DATA_DIR, 'processed3', 'train/train_labels.pkl'))
+    y_val.to_pickle(os.path.join(DATA_DIR, 'processed3', 'val/val_labels.pkl'))
+    y_test.to_pickle(os.path.join(DATA_DIR, 'processed3', 'test/test_labels.pkl'))

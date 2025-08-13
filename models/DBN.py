@@ -106,9 +106,7 @@ class DBN(nn.Module):
         batch_size = len(data_loader.dataset)
         # For every batch
         for input_data, _ in tqdm(data_loader):
-
             # print(input_data.shape)
-
             # Applying the initial hidden probabilities as the input_data
             batch_size = input_data.size(0)
             hidden_probs = input_data
@@ -150,6 +148,60 @@ class DBN(nn.Module):
         mse /= len(data_loader)
 
         return mse, visible_probs, batch_list
+    
+
+    def reconstructOne(self, input):
+        """Reconstructs batches of new input_data.
+
+        Parameters
+        ----------
+            dataset (torch.utils.data.Dataset): A Dataset object containing the training data.
+
+        Returns
+        -------
+            Reconstruction error and visible probabilities, i.e., P(v|h).
+        """
+
+        # Resetting MSE to zero
+        mse = 0
+
+        # Applying the initial hidden probabilities as the input_data
+        hidden_probs = input
+
+        # For every possible model (RBM)
+        for model in self.models:
+            # Flattening the hidden probabilities
+            hidden_probs = hidden_probs.reshape(
+                1, model.n_visible)
+
+            # Performing a hidden layer sampling
+            hidden_probs, _ = model.sample_hidden(hidden_probs)
+
+        # Applying the initial visible probabilities as the hidden probabilities
+        visible_probs = hidden_probs
+
+        # For every possible model (RBM)
+        for model in reversed(self.models):
+            # Flattening the visible probabilities
+            visible_probs = visible_probs.reshape(
+                1, model.n_hidden)
+
+            # Performing a visible layer sampling
+            visible_probs, visible_states = model.sample_visible(
+                visible_probs)
+
+        # Calculating current's batch reconstruction MSE
+        mse = torch.div(
+            torch.sum(torch.pow(input - visible_states, 2)), 1)
+        
+        # Summing up to reconstruction's MSE
+        # .item() makes it a float
+
+
+        # Normalizing the MSE with the number of batches
+
+        return mse, visible_probs
+    
 
     def forward(self, x):
         """Performs a forward pass over the data.
