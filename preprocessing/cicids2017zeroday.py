@@ -184,8 +184,12 @@ class CICIDS2017Preprocessor(object):
             stratify=self.trainLabels
         )
 
-        y_test = self.data['label_category']
-        X_test = self.data.drop(labels=['label', 'label_category'], axis=1)
+        test = self.data[self.data['label_category'] == 'Benign'].sample(n=50000, random_state=42)
+        test = test[test['label_category'] == 'DoS'].sameple(n=20000, random_state=42)
+        test = test[test['label_category'] == 'PortScan'].sameple(n=10000, random_state=42)
+
+        y_test = test['label_category']
+        X_test = test.drop(labels=['label', 'label_category'], axis=1)
         
         print(y_pretrain.value_counts())
         print(y_train.value_counts())
