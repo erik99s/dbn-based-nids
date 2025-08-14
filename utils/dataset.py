@@ -112,6 +112,31 @@ def get_dataset(data_path: str, balanced: bool, knownAttacksGrouped: bool):
 
     return pretrain_data, train_data, val_data, test_data
 
+def get_dataset_ae(data_path: str):
+    train_data = CICIDSDataset(
+        features_file=f"{data_path}/processedAE/train/train_features.pkl",
+        target_file=f"{data_path}/processedAE/train/train_labels.pkl",
+        transform=torch.tensor,
+        target_transform=torch.tensor
+    )
+
+    val_data = CICIDSDataset(
+        features_file=f"{data_path}/processedAE/val/val_features.pkl",
+        target_file=f"{data_path}/processedAE/val/val_labels.pkl",
+        transform=torch.tensor,
+        target_transform=torch.tensor
+    )
+
+    test_data = CICIDSDataset(
+        features_file=f"{data_path}/processedAE/test/test_features.pkl",
+        target_file=f"{data_path}/processedAE/test/test_labels.pkl",
+        transform=torch.tensor,
+        target_transform=torch.tensor
+    )
+
+    
+    return train_data, val_data, test_data
+
 
 def load_data(data_path: str, balanced: bool, batch_size: int, knownAttacksGrouped: bool):
     """Load training, validation and test set."""
@@ -141,3 +166,26 @@ def load_data(data_path: str, balanced: bool, batch_size: int, knownAttacksGroup
     )
 
     return pretrain_data, train_loader, valid_loader, test_loader
+
+
+def load_data_ae(data_path: str, batch_size: int):
+    train_data, val_data, test_loader = get_dataset_ae(data_path=data_path)
+
+    train_loader = torch.utils.data.DataLoader(
+        dataset=train_data,
+        batch_size=batch_size,
+        shuffle=True
+    )
+    valid_loader = torch.utils.data.DataLoader(
+        dataset=val_data,
+        batch_size=batch_size,
+        shuffle=True
+    )
+    test_loader = torch.utils.data.DataLoader(
+        dataset=val_data,
+        batch_size=batch_size,
+        shuffle=True
+    )
+
+    return train_loader, valid_loader, test_loader
+

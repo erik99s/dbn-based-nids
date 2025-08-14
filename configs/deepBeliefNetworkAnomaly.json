@@ -10,8 +10,19 @@
             "momentum": [0.9, 0.9, 0.9, 0.9],
             "decay": [0, 0, 0, 0],
             "batch_size": [64, 64, 64, 64],
-            "num_epochs": [2, 2, 2, 2],
+            "num_epochs": [5,5,5,5],
             "k": [1, 1, 1, 1]
+        }
+    },
+    "auto_encoder": {
+        "type": "AE",
+        "args": {
+            "n_visible": 49,
+            "n_hidden": [25,10,5],
+            "n_classes": 2,
+            "learning_rate": [1e-3,1e-3,1e-3],
+            "batch_size": [64,64,64],
+            "num_epochs": [10,10,10]
         }
     },
     "data_loader": {
@@ -20,6 +31,12 @@
             "batch_size": 128,
             "balanced": false,
             "knownAttacksGrouped": false 
+        }
+    },
+    "data_loader_ae": {
+        "type": "CICIDS2017DataLoader",
+        "args": {
+            "batch_size": 128
         }
     },
     "optimizer": {

@@ -118,17 +118,15 @@ class CICIDS2017Preprocessor(object):
             'DoS GoldenEye': 'DoS',
             'DoS slowloris': 'DoS', 
             'DoS Slowhttptest': 'DoS',
-            'Heartbleed': 'DoS',
+            'Heartbleed': 'ZeroDay',
             'FTP-Patator': 'Brute Force',
             'SSH-Patator': 'Brute Force',
             'Bot': 'Bot',
             'Web Attack � Brute Force': 'Brute Force',
-            'Web Attack � Sql Injection': 'Zero Day',
-            'Web Attack � XSS': 'Zero Day',
-            'Infiltration': 'Zero Day'
+            'Web Attack � Sql Injection': 'ZeroDay',
+            'Web Attack � XSS': 'ZeroDay',
+            'Infiltration': 'ZeroDay'
         }
-        
-        
         
 
         # Create grouped label column
@@ -137,24 +135,39 @@ class CICIDS2017Preprocessor(object):
     def train_valid_test_split(self):
         """"""
         # Used to for only benign traffic
-        
-        self.labels = self.data['label_category']
-        self.features = self.data.drop(labels=['label', 'label_category'], axis=1) 
+        benign = self.data[self.data['label_category'] == 'Benign']
+
+        self.labels = benign['label_category']
+        self.features = benign.drop(labels=['label', 'label_category'], axis=1) 
         
         if self.tp == 0:
-            X_train, X_test, y_train, y_test = train_test_split(
+            X_train, X_val, y_train, y_val = train_test_split(
                 self.features,
                 self.labels,
-                test_size=(self.validation_size + self.testing_size),
+                test_size=self.validation_size,
                 random_state=42,
                 stratify=self.labels
             )
+            """
             X_test, X_val, y_test, y_val = train_test_split(
                 X_test,
                 y_test,
                 test_size=self.testing_size / (self.validation_size + self.testing_size),
                 random_state=42
             )
+            """
+        benign = self.data[self.data['label_category'] == 'Benign'].sample(n=50000, random_state=42)
+        zeroday = self.data[self.data['label_category'] == 'ZeroDay']
+
+        test = pd.concat([benign, zeroday])
+
+        y_test = test['label_category']
+        X_test = test.drop(labels=['label', 'label_category'], axis=1)
+
+        print(y_train.value_counts())
+        print(y_val.value_counts())
+        print(y_test.value_counts())
+
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
     
     def scale(self, training_set, validation_set, testing_set):
@@ -164,47 +177,38 @@ class CICIDS2017Preprocessor(object):
         categorical_features = self.features.select_dtypes(exclude=["number"]).columns
         numeric_features = self.features.select_dtypes(exclude=[object]).columns
 
-        print(self.features.shape)
-        print(categorical_features.shape)
-        print(numeric_features.shape)
 
         preprocessor = ColumnTransformer(transformers=[
-            ('categoricals', OneHotEncoder(drop='first', sparse=False, handle_unknown='error'), categorical_features),
+            ('categoricals', OneHotEncoder(drop='first', sparse=False, handle_unknown='ignore'), categorical_features),
             ('numericals', QuantileTransformer(), numeric_features)
         ])
 
         # Preprocess the features
-        columns = numeric_features.tolist()
+        # columns = numeric_features.tolist()
 
-        X_train = pd.DataFrame(preprocessor.fit_transform(X_train), columns=columns)
-        X_val = pd.DataFrame(preprocessor.transform(X_val), columns=columns)
-        X_test = pd.DataFrame(preprocessor.transform(X_test), columns=columns)
+        X_train = pd.DataFrame(preprocessor.fit_transform(X_train))
+        X_val = pd.DataFrame(preprocessor.transform(X_val))
+        X_test = pd.DataFrame(preprocessor.transform(X_test))
+
 
         # Preprocess the labels
-        le = LabelEncoder()
+        all_labels = pd.concat([y_train, y_val, y_test])
+        all_classes = sorted(all_labels.unique())
 
-        y_train = pd.DataFrame(le.fit_transform(y_train), columns=["label"])
+        le = LabelEncoder()
+        le.classes_ = np.array(all_classes)
+
+        y_train = pd.DataFrame(le.transform(y_train), columns=["label"])
         y_val = pd.DataFrame(le.transform(y_val), columns=["label"])
         y_test = pd.DataFrame(le.transform(y_test), columns=["label"])
 
-        """
         print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
         print(f"Train: {len(y_train)}, Val: {len(y_val)}, Test: {len(y_test)}")
 
+        print(y_train['label'].value_counts())
+        print(y_val['label'].value_counts())
         print(y_test['label'].value_counts())
 
-        Train: 1455436, Val: 485146, Test: 485145
-        Train: 1455436, Val: 485146, Test: 485145
-        0    407115
-        3     64142
-        5     11346
-        2      1672
-        6       464
-        1       398
-        4         8
-
-        """
-        print(X_train.shape)
 
         return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
@@ -239,10 +243,10 @@ if __name__ == "__main__":
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(training_set, validation_set, testing_set)
     
     # Save the results
-    X_train.to_pickle(os.path.join(DATA_DIR, 'processed3', 'train/train_features.pkl'))
-    X_val.to_pickle(os.path.join(DATA_DIR, 'processed3', 'val/val_features.pkl'))
-    X_test.to_pickle(os.path.join(DATA_DIR, 'processed3', 'test/test_features.pkl'))
+    X_train.to_pickle(os.path.join(DATA_DIR, 'processedAE', 'train/train_features.pkl'))
+    X_val.to_pickle(os.path.join(DATA_DIR, 'processedAE', 'val/val_features.pkl'))
+    X_test.to_pickle(os.path.join(DATA_DIR, 'processedAE', 'test/test_features.pkl'))
 
-    y_train.to_pickle(os.path.join(DATA_DIR, 'processed3', 'train/train_labels.pkl'))
-    y_val.to_pickle(os.path.join(DATA_DIR, 'processed3', 'val/val_labels.pkl'))
-    y_test.to_pickle(os.path.join(DATA_DIR, 'processed3', 'test/test_labels.pkl'))
+    y_train.to_pickle(os.path.join(DATA_DIR, 'processedAE', 'train/train_labels.pkl'))
+    y_val.to_pickle(os.path.join(DATA_DIR, 'processedAE', 'val/val_labels.pkl'))
+    y_test.to_pickle(os.path.join(DATA_DIR, 'processedAE', 'test/test_labels.pkl'))

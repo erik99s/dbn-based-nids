@@ -43,6 +43,9 @@ def main(config):
     model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
     model.to(DEVICE)
 
+    auto_encoder = models.load_model(model_name=config["auto_encoder"]["type"], params=config["auto_encoder"]["args"])
+    auto_encoder.to(DEVICE)
+
     print(model)
     logging.info("Loading dataset...")
     pretrain_loader, train_loader, valid_loader, test_loader = dataset.load_data(
@@ -65,6 +68,8 @@ def main(config):
         model.fit(train_loader)
     else:
         optimizer = [getattr(torch.optim, config["optimizer"]["type"])(params=model.parameters(), **config["optimizer"]["args"])]
+
+    
 
     logging.info("Start training the model...")
     train_history = train(
@@ -96,7 +101,7 @@ def main(config):
     """
 
 
-    # labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan']
+    labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan']
     # labels = ['Benign', 'Known']
 
     """

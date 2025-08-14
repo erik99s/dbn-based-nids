@@ -14,9 +14,9 @@ $(BIN)/activate: requirements.txt
 
 
 init: $(BIN)/activate
-	mkdir -p ./data/processed3/test
-	mkdir -p ./data/processed3/train
-	mkdir -p ./data/processed3/val
+	mkdir -p ./data/processedAE/test
+	mkdir -p ./data/processedAE/train
+	mkdir -p ./data/processedAE/val
 	mkdir -p ./data/raw
 
 
