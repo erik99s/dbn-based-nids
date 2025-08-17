@@ -68,8 +68,8 @@ def main(config):
         model.fit(train_loader)
     else:
         optimizer = [getattr(torch.optim, config["optimizer"]["type"])(params=model.parameters(), **config["optimizer"]["args"])]
-
     
+    criterionAE = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
 
     logging.info("Start training the model...")
     train_history = train(
@@ -83,6 +83,17 @@ def main(config):
     )
     print(model)
     logging.info(f'{config["name"]} model trained!')
+
+    logging.info("start traning AE")
+    auto_encoder.fit(
+        criterion=criterion,
+        optimizer=optimizer,
+        train_loader=train_loader,
+        valid_loader=valid_loader,
+        device=DEVICE
+    )
+    logging.info("AE trained")
+
 
     train_output_true = train_history["train"]["output_true"]
     train_output_pred = train_history["train"]["output_pred"]

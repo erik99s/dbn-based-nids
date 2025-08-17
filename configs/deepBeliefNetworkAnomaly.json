@@ -20,9 +20,9 @@
             "n_visible": 49,
             "n_hidden": [25,10,5],
             "n_classes": 2,
-            "learning_rate": [1e-3,1e-3,1e-3],
-            "batch_size": [64,64,64],
-            "num_epochs": [10,10,10]
+            "learning_rate": 1e-3,
+            "batch_size": 64,
+            "num_epochs": 10
         }
     },
     "data_loader": {
@@ -46,9 +46,15 @@
             "weight_decay": 0,
             "amsgrad": false
         }
-    },
+    }, 
     "loss": {
         "type": "CrossEntropyLoss",
+        "args": {
+            "reduction": "mean"
+        }
+    }, 
+    "lossAE": {
+        "type": "MSELoss",
         "args": {
             "reduction": "mean"
         }

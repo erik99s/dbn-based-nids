@@ -250,7 +250,6 @@ class RBM(nn.Module):
 
             # For every batch
             for inputs, _ in tqdm(train_loader):
-
                 inputs = inputs.to(self.device)
                 # Performs the Gibbs sampling procedure
                 _, _, _, _, visible_states = self.gibbs_sampling(

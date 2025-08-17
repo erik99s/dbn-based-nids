@@ -28,6 +28,7 @@ torch.backends.cudnn.benchmark = False
 
 def main(config):
     """Centralised"""
+    criterion = getattr(torch.nn, config["loss"]["type"])(**config["loss"]["args"])
 
     model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
     model.to(DEVICE)
@@ -41,8 +42,6 @@ def main(config):
         knownAttacksGrouped=config["data_loader"]["args"]["knownAttacksGrouped"]
     )
     print("Dataset loaded!")
-
-    criterion = getattr(torch.nn, config["loss"]["type"])(**config["loss"]["args"])
 
     print("testing")
     test_history = test(

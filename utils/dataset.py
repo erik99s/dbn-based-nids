@@ -171,6 +171,7 @@ def load_data(data_path: str, balanced: bool, batch_size: int, knownAttacksGroup
 def load_data_ae(data_path: str, batch_size: int):
     train_data, val_data, test_loader = get_dataset_ae(data_path=data_path)
 
+    print(batch_size)
     train_loader = torch.utils.data.DataLoader(
         dataset=train_data,
         batch_size=batch_size,
