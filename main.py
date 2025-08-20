@@ -39,23 +39,21 @@ def main(config):
     utils.mkdir(LOG_DIR)
     setup_logging(save_dir=LOG_DIR, log_config=LOG_CONFIG_PATH)
 
+    # loading the deep belief network
     logging.info(f'######## Training the {config["name"]} model ########')
     model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
     model.to(DEVICE)
 
+    # loading the Auto Encoder
     auto_encoder = models.load_model(model_name=config["auto_encoder"]["type"], params=config["auto_encoder"]["args"])
     auto_encoder.to(DEVICE)
 
-    print(model)
-    logging.info("Loading dataset...")
-    pretrain_loader, train_loader, valid_loader, test_loader = dataset.load_data(
+    logging.info("loading dataset for AE")
+    train_loader, valid_loader, test_loader = dataset.load_data_ae(
         data_path=DATA_DIR,
-        balanced=config["data_loader"]["args"]["balanced"],
-        batch_size=config["data_loader"]["args"]["batch_size"],
-        knownAttacksGrouped=config["data_loader"]["args"]["knownAttacksGrouped"]
+        batch_size=config["data_loader_ae"]["args"]["batch_size"],
     )
-    logging.info("Dataset loaded!")
-
+    logging.info("Datasets loaded")
     criterion = getattr(torch.nn, config["loss"]["type"])(**config["loss"]["args"])
     if config["model"]["type"] == "DBN":
         optimizer = [
@@ -64,14 +62,15 @@ def main(config):
         ]
         
         # Pre-train the DBN model
-        logging.info("Start pre-training the model...")
+        logging.info("Start pre-training the DBN...")
         model.fit(train_loader)
     else:
         optimizer = [getattr(torch.optim, config["optimizer"]["type"])(params=model.parameters(), **config["optimizer"]["args"])]
     
     criterionAE = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
+    optimizerAE = getattr(torch.optim, config["optimizer"]["type"])( params=auto_encoder.parameters(), **config["optimizer"]["args"])
 
-    logging.info("Start training the model...")
+    logging.info("Start training the DBN...")
     train_history = train(
         model=model,
         criterion=criterion,
@@ -84,15 +83,20 @@ def main(config):
     print(model)
     logging.info(f'{config["name"]} model trained!')
 
-    logging.info("start traning AE")
+    torch.save(model.state_dict(), "dbn_model_.pth")
+   
+    logging.info("start traning the AE")
     auto_encoder.fit(
-        criterion=criterion,
-        optimizer=optimizer,
+        criterion=criterionAE,
+        optimizer=optimizerAE,
         train_loader=train_loader,
         valid_loader=valid_loader,
         device=DEVICE
     )
     logging.info("AE trained")
+
+    torch.save(auto_encoder.state_dict(), "autoencoder_model.pth")
+
 
 
     train_output_true = train_history["train"]["output_true"]
@@ -156,7 +160,9 @@ def main(config):
     logging.info(f'Evaluate {config["name"]} model')
     test_history = test(
         model=model,
+        auto_encoder = auto_encoder,
         criterion=criterion,
+        criterionAE=criterionAE,
         test_loader=test_loader,
         device=DEVICE
     )

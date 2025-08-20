@@ -91,6 +91,7 @@ class CICIDS2017Preprocessor(object):
     def group_labels(self):
         """"""
         # Proposed Groupings
+        """
         attack_group = {
             'BENIGN': 'Benign',
             'PortScan': 'ZeroDay', 
@@ -126,7 +127,6 @@ class CICIDS2017Preprocessor(object):
             'Web Attack � XSS': 'ZeroDay',
             'Infiltration': 'ZeroDay'
         }
-        """
         
 
         # Create grouped label column
@@ -135,7 +135,8 @@ class CICIDS2017Preprocessor(object):
     def train_valid_test_split(self):
         """"""
         # Used to for only benign traffic
-        train = self.data[self.data['label_category'] != 'ZeroDay']
+        train = self.data[self.data['label_category'] != 'Benign']
+        train = train[train['label_category'] != 'ZeroDay']
 
         self.labels = train['label_category']
         self.features = train.drop(labels=['label', 'label_category'], axis=1) 
@@ -245,13 +246,13 @@ if __name__ == "__main__":
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(training_set, validation_set, testing_set)
     
     # Save the results
-    X_train.to_pickle(os.path.join(DATA_DIR, 'processed3', 'train/train_features.pkl'))
-    X_val.to_pickle(os.path.join(DATA_DIR, 'processed3', 'val/val_features.pkl'))
-    X_test.to_pickle(os.path.join(DATA_DIR, 'processed3', 'test/test_features.pkl'))
+    X_train.to_pickle(os.path.join(DATA_DIR, 'processed4', 'train/train_features.pkl'))
+    X_val.to_pickle(os.path.join(DATA_DIR, 'processed4', 'val/val_features.pkl'))
+    X_test.to_pickle(os.path.join(DATA_DIR, 'processed4', 'test/test_features.pkl'))
 
-    y_train.to_pickle(os.path.join(DATA_DIR, 'processed3', 'train/train_labels.pkl'))
-    y_val.to_pickle(os.path.join(DATA_DIR, 'processed3', 'val/val_labels.pkl'))
-    y_test.to_pickle(os.path.join(DATA_DIR, 'processed3', 'test/test_labels.pkl'))
+    y_train.to_pickle(os.path.join(DATA_DIR, 'processed4', 'train/train_labels.pkl'))
+    y_val.to_pickle(os.path.join(DATA_DIR, 'processed4', 'val/val_labels.pkl'))
+    y_test.to_pickle(os.path.join(DATA_DIR, 'processed4', 'test/test_labels.pkl'))
 
 
     """

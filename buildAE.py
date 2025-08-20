@@ -3,10 +3,10 @@ import numpy as np
 import argparse
 import os
 
-import torch
-import torch.optim as optim
 from logger import setup_logging
 
+import torch
+import torch.optim as optim
 from utils import (
     dataset,
     models,
@@ -22,6 +22,7 @@ DATA_DIR  = os.path.join(os.path.abspath('.'), "data")
 IMAGE_DIR = os.path.join(os.path.abspath("."), "images")
 MODEL_DIR = os.path.join(os.path.abspath("."), "checkpoints")
 
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Ensure that all operations are deterministic for reproducibility, even on GPU (if used)
@@ -29,12 +30,13 @@ utils.set_seed(42)
 torch.backends.cudnn.determinstic = True
 torch.backends.cudnn.benchmark = False
 
-utils.mkdir(LOG_DIR)
-setup_logging(save_dir=LOG_DIR, log_config=LOG_CONFIG_PATH)
 
 def main(config):
     """Centralised"""
     print("im here")
+
+    utils.mkdir(LOG_DIR)
+    setup_logging(save_dir=LOG_DIR, log_config=LOG_CONFIG_PATH)
 
     model = models.load_model(model_name=config["auto_encoder"]["type"], params=config["auto_encoder"]["args"])
     model.to(DEVICE)
@@ -47,11 +49,7 @@ def main(config):
         data_path=DATA_DIR,
         batch_size=config["data_loader_ae"]["args"]["batch_size"],
     )
-    print(len(train_loader))
-    print("Dataset loaded!")
 
-    print(type(train_loader))
-    print(train_loader)
     model.fit(
         criterion=criterion,
         optimizer=optimizer,
@@ -60,9 +58,11 @@ def main(config):
         device=DEVICE
     )
 
-    print("done testing")
+    torch.save(model.state_dict(), "autoencoder_model.pth")
 
-    model.testing(
+    print("done training")
+
+    model.testingWithAttacks(
         criterion=criterion,
         test_loader=test_loader,
         device=DEVICE

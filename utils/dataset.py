@@ -114,27 +114,29 @@ def get_dataset(data_path: str, balanced: bool, knownAttacksGrouped: bool):
 
 def get_dataset_ae(data_path: str):
     train_data = CICIDSDataset(
-        features_file=f"{data_path}/processedAE/train/train_features.pkl",
-        target_file=f"{data_path}/processedAE/train/train_labels.pkl",
+        features_file=f"{data_path}/processed3/train/train_features.pkl",
+        target_file=f"{data_path}/processed3/train/train_labels.pkl",
         transform=torch.tensor,
         target_transform=torch.tensor
     )
 
     val_data = CICIDSDataset(
-        features_file=f"{data_path}/processedAE/val/val_features.pkl",
-        target_file=f"{data_path}/processedAE/val/val_labels.pkl",
+        features_file=f"{data_path}/processed3/val/val_features.pkl",
+        target_file=f"{data_path}/processed3/val/val_labels.pkl",
         transform=torch.tensor,
         target_transform=torch.tensor
     )
 
     test_data = CICIDSDataset(
-        features_file=f"{data_path}/processedAE/test/test_features.pkl",
-        target_file=f"{data_path}/processedAE/test/test_labels.pkl",
+        features_file=f"{data_path}/processed3/test/test_features.pkl",
+        target_file=f"{data_path}/processed3/test/test_labels.pkl",
         transform=torch.tensor,
         target_transform=torch.tensor
     )
 
-    
+    print(train_data.labels.value_counts())
+    print(val_data.labels.value_counts())
+    print(test_data.labels.value_counts())
     return train_data, val_data, test_data
 
 
@@ -156,7 +158,7 @@ def load_data(data_path: str, balanced: bool, batch_size: int, knownAttacksGroup
     )
     valid_loader = torch.utils.data.DataLoader(
         dataset=val_data,
-        batch_size=batch_size,
+        batch_size=batch_size,  
         shuffle=True
     )
     test_loader = torch.utils.data.DataLoader(
@@ -169,9 +171,8 @@ def load_data(data_path: str, balanced: bool, batch_size: int, knownAttacksGroup
 
 
 def load_data_ae(data_path: str, batch_size: int):
-    train_data, val_data, test_loader = get_dataset_ae(data_path=data_path)
+    train_data, val_data, test_data = get_dataset_ae(data_path=data_path)
 
-    print(batch_size)
     train_loader = torch.utils.data.DataLoader(
         dataset=train_data,
         batch_size=batch_size,
@@ -183,8 +184,8 @@ def load_data_ae(data_path: str, batch_size: int):
         shuffle=True
     )
     test_loader = torch.utils.data.DataLoader(
-        dataset=val_data,
-        batch_size=batch_size,
+        dataset=test_data,
+        batch_size=1,
         shuffle=True
     )
 

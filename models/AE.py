@@ -47,26 +47,28 @@ class AE(nn.Module):
         self.batch_size = batch_size
         self.num_epochs = num_epochs
 
-
         self.encoder = nn.Sequential(
-            nn.Linear(n_visible, 25),
+            nn.Linear(n_visible, n_hidden[0]),
             nn.ReLU(),
-            nn.Linear(25, 10),
+            nn.Linear(n_hidden[0], n_hidden[1]),
             nn.ReLU(),
-            nn.Linear(10, 5),
+            nn.Linear(n_hidden[1], n_hidden[2]),
             nn.ReLU(),
-            nn.Linear(5, n_classes)
+            nn.Linear(n_hidden[2], n_hidden[3]),
+            nn.ReLU(),
+            nn.Linear(n_hidden[3], n_classes)
         )
         # Decoder layers
         self.decoder = nn.Sequential(
-            nn.Linear(n_classes, 5),
+            nn.Linear(n_classes, n_hidden[3]),
             nn.ReLU(),
-            nn.Linear(5, 10),
+            nn.Linear(n_hidden[3], n_hidden[2]),
             nn.ReLU(),
-            nn.Linear(10, 25),
+            nn.Linear(n_hidden[2], n_hidden[1]),
             nn.ReLU(),
-            nn.Linear(25, n_visible),
-            nn.Sigmoid()
+            nn.Linear(n_hidden[1], n_hidden[0]),
+            nn.ReLU(),
+            nn.Linear(n_hidden[0], n_visible)
         )
         # For every possible layer
 
@@ -109,6 +111,8 @@ class AE(nn.Module):
             print(f"[Epoch {epoch+1}/{self.num_epochs}] Loss: {total_loss/len(train_loader):.6f}")
 
             # validation loop
+            # Commented for now as it was used to figure out the amount of epochs needed
+            """
             self.eval()
             total_val_loss = 0
             with torch.no_grad():   # no gradient computation
@@ -123,6 +127,8 @@ class AE(nn.Module):
             print(f"[Epoch {epoch+1}/{self.num_epochs}] "
             f"Train Loss: {avg_train_loss:.6f} | Val Loss: {avg_val_loss:.6f}")
 
+            """
+
 
     def testing(
             self: torch.nn.Module,
@@ -134,17 +140,152 @@ class AE(nn.Module):
         self.eval()
 
         losslist = []
-        avg_test_loss = 0
+        total_test_loss = 0
+        total_test_loss_benign = 0
+        total_test_loss_zero = 0
+
+        mse1 = 0
+        mse2 = 0
+
+        lossBenign = []
+        lossZero = []
         with torch.no_grad():
             for input, labels in tqdm(test_loader):
                 input = input.to(device)
                 reconstructed = self.forward(input)
                 loss = criterion(reconstructed, input)
-                losslist.append(loss)
-                total_val_loss += loss.item()
-            avg_test_loss = total_val_loss/len(test_loader)
+                losslist.append(loss.item())
+                total_test_loss += loss.item() 
+                if labels.item() == 0:
+                    total_test_loss_benign += loss.item()
+                    lossBenign.append(loss.item())
+                    mse1 += torch.sum(torch.pow(input - reconstructed, 2))
+                else:
+                    total_test_loss_zero += loss.item()
+                    lossZero.append(loss.item())
+                    mse2 = torch.sum(torch.pow(input - reconstructed, 2))
+            avg_test_loss = total_test_loss/len(test_loader)
+            avg_test_loss_benign = total_test_loss_benign/len(lossBenign)
+            avg_test_loss_zero = total_test_loss_zero/len(lossZero)
+            avg_mse_benign = mse1 / len(lossBenign)
+            avg_mse_zero = mse2 / len(lossZero)
         
-        print( f"Train Loss: {avg_test_loss:.6f} | Val Loss: {avg_test_loss:.6f}")
+        print( f"Test Loss: {avg_test_loss:.6f}")
+        print( f"Test Loss: {avg_test_loss_benign:.6f}")
+        print( f"Test Loss: {avg_test_loss_zero:.6f}")
+
+        print( f"Test MSE: {avg_mse_benign:.6f}")
+        print( f"Test MSE: {avg_mse_zero:.6f}")
+
+
+    def testingWithAttacks(
+            self: torch.nn.Module,
+            criterion: torch.nn.Module,
+            test_loader: torch.utils.data.DataLoader,
+            device
+        ):
+
+        self.eval()
+
+        losslist = []
+        total_test_loss = 0
+        total_test_loss_benign = 0
+        total_test_loss_attacks = 0
+        total_test_loss_zero = 0
+
+        mse1 = 0
+        mse2 = 0
+        mse3 = 0
+
+        lossBenign = []
+        lossAttack = []
+        lossZero = []
+
+        with torch.no_grad():
+            for input, labels in tqdm(test_loader):
+                input = input.to(device)
+                reconstructed = self(input)
+                loss = criterion(reconstructed, input)
+                losslist.append(loss.item())
+                total_test_loss += loss.item() 
+                if labels.item() == 0:
+                    total_test_loss_benign += loss.item()
+                    lossBenign.append(loss.item())
+                    mse1 += torch.sum(torch.pow(input - reconstructed, 2))
+                elif labels.item() == 5:
+                    total_test_loss_zero += loss.item()
+                    lossZero.append(loss.item())
+                    mse2 += torch.sum(torch.pow(input - reconstructed, 2))
+                else:
+                    total_test_loss_attacks += loss.item()
+                    lossAttack.append(loss.item())
+                    mse3 += torch.sum(torch.pow(input - reconstructed,2))                  
+            avg_test_loss = total_test_loss/len(test_loader)
+            avg_test_loss_benign = total_test_loss_benign/len(lossBenign)
+            avg_test_loss_attack = total_test_loss_attacks/len(lossAttack)
+            avg_test_loss_zero = total_test_loss_zero/len(lossZero)
+            avg_mse_benign = mse1 / len(lossBenign)
+            avg_mse_attack = mse3 / len(lossAttack)
+            avg_mse_zero = mse2 / len(lossZero)
+
+            maxBenign = min(lossBenign)
+            minBenign = max(lossBenign)
+            minZero = min(lossZero)
+            maxZero = max(lossZero)
+            minAttack = min(lossAttack)
+            maxAttack = max(lossAttack)
+
+        
+        print( f"Test Loss: {avg_test_loss:.6f}")
+        print( f"Test Loss: {avg_test_loss_benign:.6f}")
+        print( f"Test Loss: {avg_test_loss_attack:.6f}")
+        print( f"Test Loss: {avg_test_loss_zero:.6f}")
+        
+        print( f"Test MSE: {avg_mse_benign:.6f}")
+        print( f"Test MSE: {avg_mse_attack:.6f}")
+        print( f"Test MSE: {avg_mse_zero:.6f}")
+
+        print( f"{maxBenign} : {minBenign} : {minZero} : {maxZero} : {minAttack} : {maxAttack}")
+
+        plt.figure(figsize=(12, 8))
+
+        # Plot benign
+        plt.subplot(3, 1, 1)
+        plt.plot(range(len(lossBenign)), lossBenign, label="Benign", color="green")
+        plt.ylabel("Loss")
+        plt.title("Reconstruction Loss (Benign)")
+        plt.legend()
+
+        # Plot attack
+        plt.subplot(3, 1, 2)
+        plt.plot(range(len(lossAttack)), lossAttack, label="Attacks", color="red")
+        plt.ylabel("Loss")
+        plt.title("Reconstruction Loss (Attacks)")
+        plt.legend()
+
+        # Plot zero-day
+        plt.subplot(3, 1, 3)
+        plt.plot(range(len(lossZero)), lossZero, label="Zero-day", color="blue")
+        plt.xlabel("Index (sample)")
+        plt.ylabel("Loss")
+        plt.title("Reconstruction Loss (Zero-day)")
+        plt.legend()
+
+        plt.tight_layout()
+        plt.savefig("reconstruction_losses.png", dpi=300)
+    
+
+        
+
+
+    
+    
+        """
+        plt.hist(lossBenign.detach().cpu().numpy(), bins=50, alpha=0.5, label="benign")
+        plt.hist(lossZero.detach().cpu().numpy(), bins=50, alpha=0.5, label="zero-day")
+        plt.legend()
+        plt.show()
+        """
     
             
     """    

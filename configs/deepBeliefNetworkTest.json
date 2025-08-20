@@ -6,12 +6,23 @@
             "n_visible": 49,
             "n_hidden": [64],
             "n_classes": 6,
-            "learning_rate": [0.1],
-            "momentum": [0.8],
-            "decay": [0.1],
+            "learning_rate": [0.01],
+            "momentum": [0.9],
+            "decay": [0],
             "batch_size": [64],
             "num_epochs": [1],
             "k": [1]
+        }
+    },
+    "auto_encoder": {
+        "type": "AE",
+        "args": {
+            "n_visible": 49,
+            "n_hidden": [128,64,32,16],
+            "n_classes": 2,
+            "learning_rate": 1e-3,
+            "batch_size": 64,
+            "num_epochs": 0
         }
     },
     "data_loader": {
@@ -22,6 +33,12 @@
             "knownAttacksGrouped": false 
         }
     },
+    "data_loader_ae": {
+        "type": "CICIDS2017DataLoader",
+        "args": {
+            "batch_size": 128
+        }
+    },
     "optimizer": {
         "type": "Adam",
         "args": {
@@ -29,9 +46,15 @@
             "weight_decay": 0,
             "amsgrad": false
         }
-    },
+    }, 
     "loss": {
         "type": "CrossEntropyLoss",
+        "args": {
+            "reduction": "mean"
+        }
+    }, 
+    "lossAE": {
+        "type": "MSELoss",
         "args": {
             "reduction": "mean"
         }
@@ -39,4 +62,5 @@
     "trainer": {
         "num_epochs": 1
     }
+
 }

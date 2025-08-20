@@ -14,9 +14,9 @@ $(BIN)/activate: requirements.txt
 
 
 init: $(BIN)/activate
-	mkdir -p ./data/processedAE/test
-	mkdir -p ./data/processedAE/train
-	mkdir -p ./data/processedAE/val
+	mkdir -p ./data/processed4/test
+	mkdir -p ./data/processed4/train
+	mkdir -p ./data/processed4/val
 	mkdir -p ./data/raw
 
 
@@ -25,6 +25,9 @@ dataset: init
 
 zeroday: init
 	$(BIN)/python ./preprocessing/cicids2017zeroday.py
+
+onlyAttacks: init
+	$(BIN)/python ./preprocessing/cicids2017onlyattacks.py
 
 run: init
 	$(BIN)/python main.py --config ./configs/deepBeliefNetwork.json
