@@ -240,8 +240,7 @@ class RBM(nn.Module):
             MSE (mean squared error) and log pseudo-likelihood from the training step.
 
         """
-        print(self.n_visible)
-        print(self.n_hidden)
+        
         # For every epoch
         for epoch in range(1, self.num_epochs+1):
 
