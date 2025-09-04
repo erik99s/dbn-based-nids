@@ -54,7 +54,6 @@ def main(config):
     auto_encoder.to(DEVICE)
 
     criterionAE = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
-    optimizerAE = getattr(torch.optim, config["optimizer"]["type"])( params=auto_encoder.parameters(), **config["optimizer"]["args"])
 
     print(auto_encoder)
 
@@ -67,6 +66,34 @@ def main(config):
         device=DEVICE
     )
 
+    test_output_true = test_history["test"]["output_true"]
+    test_output_pred = test_history["test"]["output_pred"]
+    test_output_pred_prob = test_history["test"]["output_pred_prob"]
+
+    labels = ['Benign', 'ZeroDay']
+    # labels = ['Benign', 'Known', 'ZeroDay']
+    
+    ## Testing Set results
+
+    """
+     logging.info(f'Testing Set -- Classification Report {config["name"]}\n')
+    logging.info(classification_report(
+        y_true=test_output_true,
+        y_pred=test_output_pred,
+        target_names=labels
+    ))
+    """
+   
+
+    utils.mkdir(IMAGE_DIR)
+    visualisation.plot_confusion_matrix(
+        y_true=test_output_true,
+        y_pred=test_output_pred,
+        labels=labels,  
+        save=True,
+        save_dir=IMAGE_DIR,
+        filename=f'{config["name"]}_test_confusion_matrix.pdf'
+    )
 
 
 if __name__ == "__main__":

@@ -83,7 +83,7 @@ def main(config):
     print(model)
     logging.info(f'{config["name"]} model trained!')
 
-    torch.save(model.state_dict(), "dbn_model_.pth")
+    torch.save(model.state_dict(), "dbn_model_attack.pth")
    
     logging.info("start traning the AE")
     auto_encoder.fit(

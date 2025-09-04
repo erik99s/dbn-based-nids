@@ -90,57 +90,96 @@ class CICIDS2017Preprocessor(object):
 
     def group_labels(self):
         """"""
+
+        print(self.tp)
+
+        if self.tp == 0 or self.tp == 2:
+            print("why did i end up here?")
+            attack_group = {
+                'BENIGN': 'Benign',
+                'PortScan': 'PortScan', 
+                'DDoS': 'DoS',
+                'DoS Hulk': 'DoS',
+                'DoS GoldenEye': 'DoS',
+                'DoS slowloris': 'DoS', 
+                'DoS Slowhttptest': 'DoS',
+                'Heartbleed': 'ZeroDay',
+                'FTP-Patator': 'Brute Force',
+                'SSH-Patator': 'Brute Force',
+                'Bot': 'Bot',
+                'Web Attack � Brute Force': 'ZeroDay',
+                'Web Attack � Sql Injection': 'ZeroDay',
+                'Web Attack � XSS': 'ZeroDay',
+                'Infiltration': 'ZeroDay'
+            }
+        else:
         # Proposed Groupings
-        attack_group = {
-            'BENIGN': 'Benign',
-            'PortScan': 'ZeroDay', 
-            'DDoS': 'ZeroDay',
-            'DoS Hulk': 'ZeroDay',
-            'DoS GoldenEye': 'ZeroDay',
-            'DoS slowloris': 'ZeroDay', 
-            'DoS Slowhttptest': 'ZeroDay',
-            'Heartbleed': 'ZeroDay',
-            'FTP-Patator': 'ZeroDay',
-            'SSH-Patator': 'ZeroDay',
-            'Bot': 'ZeroDay',
-            'Web Attack � Brute Force': 'ZeroDay',
-            'Web Attack � Sql Injection': 'ZeroDay',
-            'Web Attack � XSS': 'ZeroDay',
-            'Infiltration': 'ZeroDay'
-        }
-        """
-        attack_group = {
-            'BENIGN': 'Benign',
-            'PortScan': 'PortScan', 
-            'DDoS': 'DoS',
-            'DoS Hulk': 'DoS',
-            'DoS GoldenEye': 'DoS',
-            'DoS slowloris': 'DoS', 
-            'DoS Slowhttptest': 'DoS',
-            'Heartbleed': 'ZeroDay',
-            'FTP-Patator': 'Brute Force',
-            'SSH-Patator': 'Brute Force',
-            'Bot': 'Bot',
-            'Web Attack � Brute Force': 'ZeroDay',
-            'Web Attack � Sql Injection': 'ZeroDay',
-            'Web Attack � XSS': 'ZeroDay',
-            'Infiltration': 'ZeroDay'
-        }
-        """
+            print("correct grouping")
+            attack_group = {
+                'BENIGN': 'Benign',
+                'PortScan': 'Attack', 
+                'DDoS': 'Attack',
+                'DoS Hulk': 'Attack',
+                'DoS GoldenEye': 'Attack',
+                'DoS slowloris': 'Attack', 
+                'DoS Slowhttptest': 'Attack',
+                'Heartbleed': 'Attack',
+                'FTP-Patator': 'Attack',
+                'SSH-Patator': 'Attack',
+                'Bot': 'Attack',
+                'Web Attack � Brute Force': 'Attack',
+                'Web Attack � Sql Injection': 'Attack',
+                'Web Attack � XSS': 'Attack',
+                'Infiltration': 'Attack'
+            }
+    
         
 
         # Create grouped label column
         self.data['label_category'] = self.data['label'].map(lambda x: attack_group[x])
         
     def train_valid_test_split(self):
-        """"""
-        # Used to for only benign traffic
-        train = self.data[self.data['label_category'] != 'ZeroDay']
-
-        self.labels = train['label_category']
-        self.features = train.drop(labels=['label', 'label_category'], axis=1) 
+        """
+        tp == 0 : original code
+        tp == 1 : training and validation set with only benign samples
+        tp == 2 : traning and validation set with only attack samples
         
-        if self.tp == 0:
+        testing set containing unseed samples of benign data, attack data and the zero day attacks. 
+
+        self.data: all attack classes
+        benign: only benign traffic
+        attack: only attack data with zero days excluded
+        zeroday: only zeroday attack data
+        """
+
+        self.benign = self.data[self.data['label_category'] == 'Benign']
+        self.benignAttack = self.data[self.data['label_category'] != 'ZeroDay']
+        self.attacks = self.data[~self.data['label_category'].isin(['ZeroDay', 'Benign'])]
+        self.zeroday = self.data[self.data['label_category'] == 'ZeroDay']
+        self.grouped = self.data[self.data['label_category'] == 'Attack']
+        
+
+        # original code generating training, validation and testing set containing all type of network traffic data
+        if self.tp == 0: 
+            self.features = self.data.drop(labels=['label', 'label_category'], axis=1)
+            self.labels = self.data['label_category']
+            X_train, X_test, y_train, y_test = train_test_split(
+                self.features,
+                self.labels,
+                test_size=(self.validation_size+self.testing_size),
+                random_state=42,
+                stratify=self.labels
+            )
+            X_test, X_val, y_test, y_val = train_test_split(
+                X_test,
+                y_test,
+                test_size=self.testing_size / (self.validation_size + self.testing_size),
+                random_state=42
+            )
+        # training and validation dataset with only benign samples
+        elif self.tp == 1:
+            self.features = self.benign.drop(labels=['label', 'label_category'], axis=1)
+            self.labels = self.benign['label_category']
             X_train, X_test, y_train, y_test = train_test_split(
                 self.features,
                 self.labels,
@@ -155,17 +194,47 @@ class CICIDS2017Preprocessor(object):
                 random_state=42
             )
             
-        print(type(X_test))
-        zeroday = self.data[self.data['label_category'] == 'ZeroDay']
+            y_testAttack = self.grouped['label_category']
+            X_testAttack = self.grouped.drop(labels=['label', 'label_category'], axis=1)
+
+            print(type(X_testAttack))
+
+            X_test = pd.concat([X_test,X_testAttack])
+            y_test = pd.concat([y_test,y_testAttack]) 
+
+            print(y_test.value_counts())
+
+
+        # training and validation dataset with only attack samples
+        elif self.tp == 2:
+            self.features = self.attacks.drop(labels=['label', 'label_category'], axis=1)
+            self.labels = self.attacks['label_category']
+            X_train, X_test, y_train, y_test = train_test_split(
+                self.features,
+                self.labels,
+                test_size=(self.validation_size+self.testing_size),
+                random_state=42,
+                stratify=self.labels
+            )
+            X_test, X_val, y_test, y_val = train_test_split(
+                X_test,
+                y_test,
+                test_size=self.testing_size / (self.validation_size + self.testing_size),
+                random_state=42
+            )
+
+            y_testZero = self.zeroday['label_category']
+            X_testZero = self.zeroday.drop(labels=['label', 'label_category'], axis=1)
+
+            print(type(X_testZero))
+
+            X_test = pd.concat([X_test,X_testZero])
+            y_test = pd.concat([y_test,y_testZero]) 
+
+            print(y_test.value_counts())
+
+
         
-        y_testZero = zeroday['label_category']
-        X_testZero = zeroday.drop(labels=['label', 'label_category'], axis=1)
-
-        print(type(X_testZero))
-
-        X_test = pd.concat([X_test,X_testZero])
-        y_test = pd.concat([y_test,y_testZero]) 
-
         print(y_train.value_counts())
         print(y_val.value_counts())
         print(y_test.value_counts())
@@ -222,7 +291,7 @@ if __name__ == "__main__":
         training_size=0.6,
         validation_size=0.2,
         testing_size=0.2,
-        tp = 0 # change this one to change the data split
+        tp = 2, # change this for different processings
     )
 
     # Read datasets
@@ -245,13 +314,13 @@ if __name__ == "__main__":
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = cicids2017.scale(training_set, validation_set, testing_set)
     
     # Save the results
-    X_train.to_pickle(os.path.join(DATA_DIR, 'processed3', 'train/train_features.pkl'))
-    X_val.to_pickle(os.path.join(DATA_DIR, 'processed3', 'val/val_features.pkl'))
-    X_test.to_pickle(os.path.join(DATA_DIR, 'processed3', 'test/test_features.pkl'))
+    X_train.to_pickle(os.path.join(DATA_DIR, f'processed{cicids2017.tp}', 'train/train_features.pkl'))
+    X_val.to_pickle(os.path.join(DATA_DIR, f'processed{cicids2017.tp}', 'val/val_features.pkl'))
+    X_test.to_pickle(os.path.join(DATA_DIR, f'processed{cicids2017.tp}', 'test/test_features.pkl'))
 
-    y_train.to_pickle(os.path.join(DATA_DIR, 'processed3', 'train/train_labels.pkl'))
-    y_val.to_pickle(os.path.join(DATA_DIR, 'processed3', 'val/val_labels.pkl'))
-    y_test.to_pickle(os.path.join(DATA_DIR, 'processed3', 'test/test_labels.pkl'))
+    y_train.to_pickle(os.path.join(DATA_DIR, f'processed{cicids2017.tp}', 'train/train_labels.pkl'))
+    y_val.to_pickle(os.path.join(DATA_DIR, f'processed{cicids2017.tp}', 'val/val_labels.pkl'))
+    y_test.to_pickle(os.path.join(DATA_DIR, f'processed{cicids2017.tp}', 'test/test_labels.pkl'))
 
 
     """
