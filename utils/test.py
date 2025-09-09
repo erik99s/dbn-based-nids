@@ -73,6 +73,8 @@ def test(
 
     listOfPredictedAttacks = []
 
+    above = 0
+
     
 
     mseList = []
@@ -95,9 +97,12 @@ def test(
             reconstructed = auto_encoder(inputs)
             lossAE = criterionAE(reconstructed, labels)
 
+
+
             # reconstruction DBN using reconstruct one
             # reconstructed_DBN = model.reconstructOne(inputs)
-
+            if lossAE.item() > 0.6:
+                above += 1
             
             if labels == 0:
                 DBN_lossBenign.append(loss_DBN)
@@ -121,6 +126,8 @@ def test(
             test_output_pred += outputs.argmax(1).cpu().tolist()
             test_output_true += labels.tolist()
             test_output_pred_prob += nn.functional.softmax(outputs, dim=0).cpu().tolist()
+    
+    print(above)
 
     plt.figure(figsize=(12, 8))
 

@@ -50,7 +50,7 @@ def main(config):
     logging.info("Datasets loaded")
    
     auto_encoder = models.load_model(model_name=config["auto_encoder"]["type"], params=config["auto_encoder"]["args"])
-    auto_encoder.load_state_dict(torch.load("./stored_models/autoencoder_model_benign.pth"))
+    auto_encoder.load_state_dict(torch.load("./stored_models/autoencoder_model.pth"))
     auto_encoder.to(DEVICE)
 
     criterionAE = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
@@ -74,9 +74,8 @@ def main(config):
     # labels = ['Benign', 'Known', 'ZeroDay']
     
     ## Testing Set results
-
     """
-     logging.info(f'Testing Set -- Classification Report {config["name"]}\n')
+    logging.info(f'Testing Set -- Classification Report {config["name"]}\n')
     logging.info(classification_report(
         y_true=test_output_true,
         y_pred=test_output_pred,
