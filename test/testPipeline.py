@@ -87,6 +87,7 @@ def main(config):
     print(test_loader)
     with torch.no_grad():
         for (inputs, labels) in tqdm(test_loader):
+
             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
             labels = labels.squeeze(1)
 
@@ -99,8 +100,8 @@ def main(config):
             if lossAE.item() > 0.6:
                 predicted = labels.item()
                 AE_labels.append(labels)
-                featuresList.append(inputs)
-                labelsList.append(labels)
+                featuresList.append(inputs.squeeze())
+                labelsList.append(labels.squeeze())
 
             else:
                 predicted = 0
@@ -123,21 +124,23 @@ def main(config):
                 FN += 1
 
     
-    print(labelsList)
-    print(featuresList)
 
+
+    """
     featuresList.to_pickle(os.path.join(DATA_DIR, f'processed', 'filtered/features_list.pkl'))
     labelsList.to_pickle(os.path.join(DATA_DIR, f'processed', 'filtered/labels_list.pkl'))
+    """
 
-    filtered_test_data = dataset.CICIDSDataset(
-        features_file=featuresList,
+    filtered_test_data = dataset.FilteredDataset(
+        feature_file=featuresList,
         target_file=labelsList,
         transform=torch.tensor,
         target_transform=torch.tensor
     )
 
-    filtered_test_loader = torch.utils.data.Dataloader(
-        dataset = filtered_test_data
+    filtered_test_loader = torch.utils.data.DataLoader(
+        dataset = filtered_test_data,
+        batch_size = 1
     )
     
     values = [t.item() for t in AE_labels]
@@ -163,14 +166,25 @@ def main(config):
     DBN_lossBenign = []
     DBN_lossZero = []
 
+    test_loss = 0.0
+    test_steps = 0
+    test_total = 0
+    test_correct = 0
+
+    test_output_pred = []
+    test_output_true = []
+    test_output_pred_prob = []
+
+
             
     with torch.no_grad():
         for (inputs, labels) in tqdm(filtered_test_loader):
             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
-            labels = labels.squeeze(1)
-
+            # labels = labels.squeeze(1)
+            
             # calls the DBN on the input
             outputs = dbn(inputs)
+
             loss = criterion(outputs, labels)
             test_loss += loss.cpu().item()
             test_steps += 1

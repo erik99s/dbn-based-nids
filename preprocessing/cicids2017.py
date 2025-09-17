@@ -93,7 +93,7 @@ class CICIDS2017Preprocessor(object):
 
         print(self.tp)
 
-        if self.tp == 0 or self.tp == 2:
+        if self.tp == 0 or self.tp == 2 or self.tp == 1:
             print("why did i end up here?")
             attack_group = {
                 'BENIGN': 'Benign',
@@ -156,7 +156,7 @@ class CICIDS2017Preprocessor(object):
         self.benignAttack = self.data[self.data['label_category'] != 'ZeroDay']
         self.attacks = self.data[~self.data['label_category'].isin(['ZeroDay', 'Benign'])]
         self.zeroday = self.data[self.data['label_category'] == 'ZeroDay']
-        self.grouped = self.data[self.data['label_category'] == 'Attack']
+        self.grouped = self.data[self.data['label_category'] != 'Benign']
         
 
         # original code generating training, validation and testing set containing all type of network traffic data
@@ -291,7 +291,7 @@ if __name__ == "__main__":
         training_size=0.6,
         validation_size=0.2,
         testing_size=0.2,
-        tp = 2, # change this for different processings
+        tp = 1, # change this for different processings
     )
 
     # Read datasets

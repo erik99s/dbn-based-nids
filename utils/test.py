@@ -104,7 +104,7 @@ def test(
             if lossAE.item() > 0.6:
                 above += 1
             
-            if labels == 0:
+            if labels == 1:
                 DBN_lossBenign.append(loss_DBN)
                 AE_lossBenign.append(lossAE.item())
                 # DBN_rec_lossBenign.append(reconstructed_DBN)

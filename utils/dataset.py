@@ -33,6 +33,33 @@ class CICIDSDataset(Dataset):
             label = self.target_transform(label, dtype=torch.int64)
         return feature, label
 
+class FilteredDataset(Dataset):
+    def __init__(self, feature_file, target_file, transform=None, target_transform=None):
+
+        """
+        Args:
+        Same as CICIDS2017Dataset, but feature file and target file isn't a read file
+        sel
+        """
+        self.features = feature_file
+        self.labels = target_file
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        feature = self.features[idx]   # list indexing
+        label = self.labels[idx]
+
+        if self.transform:
+            feature = self.transform(feature, dtype=torch.float32)
+        if self.target_transform:
+            label = self.target_transform(label, dtype=torch.int64)
+        
+        return feature, label
+
 
 def get_dataset(data_path: str, balanced: bool, knownAttacksGrouped: bool):
 
