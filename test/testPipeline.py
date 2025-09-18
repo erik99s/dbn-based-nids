@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report, f1_score
 import pandas as pd
 import numpy as np
@@ -63,11 +64,16 @@ def main(config):
     dbn.load_state_dict(torch.load("./stored_models/dbn_model_attack.pth"))
     dbn.to(DEVICE)
 
+    auto_encoder_attack = models.load_model(model_name=config["auto_encoder"]["type"], params=config["auto_encoder"]["args"])
+    auto_encoder_attack.load_state_dict(torch.load("./stored_models/autoencoder_model_attacks.pth"))
+    auto_encoder_attack.to(DEVICE)
+
     criterion = getattr(torch.nn, config["loss"]["type"])(**config["loss"]["args"])
     criterionAE = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
 
     print(auto_encoder)
     print(dbn)
+    print(auto_encoder_attack)
    
 
     AE_lossBenign = []
@@ -84,7 +90,9 @@ def main(config):
     TN = 0
     FN = 0
 
-    print(test_loader)
+    """
+    takes the test_dataset containing all types of attack and passes it to the autoencoder. 
+    """
     with torch.no_grad():
         for (inputs, labels) in tqdm(test_loader):
 
@@ -131,6 +139,11 @@ def main(config):
     labelsList.to_pickle(os.path.join(DATA_DIR, f'processed', 'filtered/labels_list.pkl'))
     """
 
+    print(f"True positive: {TP}")
+    print(f"False positive: {FP}")
+    print(f"True negative: {TN}")
+    print(f"False negative: {FN}")
+
     filtered_test_data = dataset.FilteredDataset(
         feature_file=featuresList,
         target_file=labelsList,
@@ -150,10 +163,7 @@ def main(config):
     
 
             
-    print(f"True positive: {TP}")
-    print(f"False positive: {FP}")
-    print(f"True negative: {TN}")
-    print(f"False negative: {FN}")
+   
 
     precision = TP / (TP + FP)
     recall = TP / (TP + FN)
@@ -163,8 +173,82 @@ def main(config):
     print(recall)
     print(f1_score)
 
-    DBN_lossBenign = []
-    DBN_lossZero = []
+    AE_lossZero = []
+    AE_lossAttack = []
+    AE_Threshhold = []
+
+    featuresList = []
+    labelsList = []
+
+
+    with torch.no_grad():
+        for (inputs, labels) in tqdm(filtered_test_loader):
+
+            inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
+            #labels = labels.squeeze(1)
+
+             # reconstructs the data using the Auto encoder
+            outputs = auto_encoder_attack(inputs)
+            lossAE = criterionAE(outputs, labels)
+
+            # reconstruction DBN using reconstruct one
+            # reconstructed_DBN = model.reconstructOne(inputs)
+            
+            if labels == 5:
+                AE_lossZero.append(lossAE.item()) 
+                # DBN_rec_lossBenign.append(reconstructed_DBN)
+            else:
+                AE_lossAttack.append(lossAE.item())
+                
+                # DBN_rec_lossZero.append(reconstructed_DBN)
+
+            if predicted == 5 and labels.item() == 5:   # Both say zeroday
+                TP += 1
+            elif predicted == 5 and labels.item() != 5: # Predicted zeroday, true attack
+                FP += 1
+            elif predicted != 5 and labels.item() != 5: # Both say attack
+                TN += 1
+            else:                                       # Predicted attack, true zeroday
+                FN += 1
+            
+            if lossAE > 16:
+                AE_Threshhold.append(labels)
+                featuresList.append(inputs.squeeze())
+                labelsList.append(labels.squeeze())
+
+
+    values = [t.item() for t in AE_Threshhold]
+    counts = Counter(values)
+    print(counts)
+
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
+    f1_score = 2*(precision*recall)/(precision+recall)
+
+    print(precision)
+    print(recall)
+    print(f1_score)
+
+    plt.figure(figsize=(12, 8))
+
+    # Plot Zero
+    plt.subplot(3, 1, 1)
+    plt.plot(range(len(AE_lossZero)), AE_lossZero, label="Zero", color="green")
+    plt.ylabel("Loss")
+    plt.title("Reconstruction Loss (Zero)")
+    plt.legend()
+
+    # Plot Attack
+    plt.subplot(3, 1, 2)
+    plt.plot(range(len(AE_lossAttack)), AE_lossAttack, label="Attacks", color="red")
+    plt.ylabel("Loss")
+    plt.title("Reconstruction Loss (Attacks)")
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig("reconstruction_losses_AE.png", dpi=300)
+
+    plt.close()
 
     test_loss = 0.0
     test_steps = 0
@@ -175,8 +259,13 @@ def main(config):
     test_output_true = []
     test_output_pred_prob = []
 
-
+    zeroday = 0
+    predictedZeroday = []
+    labelslist = []
             
+    """
+    Takes the filtered dataset with attacktraffic and passes it to the DBN
+    """
     with torch.no_grad():
         for (inputs, labels) in tqdm(filtered_test_loader):
             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
@@ -190,25 +279,11 @@ def main(config):
             test_steps += 1
 
             loss_DBN = criterion(outputs,labels)
+            labelslist.append(labels)
 
 
             # reconstruction DBN using reconstruct one
             # reconstructed_DBN = model.reconstructOne(inputs)
-            if lossAE.item() > 0.6:
-                above += 1
-            
-            if labels == 0:
-                DBN_lossBenign.append(loss_DBN)
-                # DBN_rec_lossBenign.append(reconstructed_DBN)
-            else:
-                DBN_lossZero.append(loss_DBN)
-                # DBN_rec_lossZero.append(reconstructed_DBN)
-            """   
-            else:
-                DBN_lossAttack.append(loss_DBN)
-                AE_lossAttack.append(lossAE.item())
-                # DBN_rec_lossAttack.append(reconstructed_DBN)
-            """ 
             _, predicted = torch.max(outputs.data, 1)
 
             test_total += labels.size(0)
@@ -218,9 +293,35 @@ def main(config):
             test_output_true += labels.tolist()
             test_output_pred_prob += nn.functional.softmax(outputs, dim=0).cpu().tolist()
 
+            if predicted != 0 and labels.item() != 0:   # Both say attack
+                TP += 1
+            elif predicted != 0 and labels.item() == 0: # Predicted attack, true benign
+                FP += 1
+            elif predicted == 0 and labels.item() == 0: # Both say benign
+                TN += 1
+            else:                                       # Predicted benign, true attack
+                FN += 1
+
+            if predicted == 5 and labels.item() == 5:
+                zeroday += 1
+
+            if labels.item() == 5:
+                predictedZeroday.append(predicted)
+
+
+    values = [t.item() for t in labelslist]
+    counts = Counter(values)
+    print(counts)
+
+    print(f"List of predictions {predictedZeroday}")
+    print(f"#zeroday: {zeroday}")
+    print(f"True positive: {TP}")
+    print(f"False positive: {FP}")
+    print(f"True negative: {TN}")
+    print(f"False negative: {FN}")
     
     
-    labels = ['Benign', 'ZeroDay']
+    labels = ['Benign', 'Bot', 'Brute Force', 'DoS', 'PortScan', 'ZeroDay']
     # labels = ['Benign', 'Known', 'ZeroDay']
     
     ## Testing Set results

@@ -14,9 +14,11 @@ $(BIN)/activate: requirements.txt
 
 
 init: $(BIN)/activate
-	mkdir -p ./data/processed1/test
-	mkdir -p ./data/processed1/train
-	mkdir -p ./data/processed1/val
+	mkdir -p ./data/processed3/test
+	mkdir -p ./data/processed3/trainAE
+	mkdir -p ./data/processed3/trainDBN
+	mkdir -p ./data/processed3/valAE
+	mkdir -p ./data/processed3/valDBN
 	mkdir -p ./data/raw
 
 
@@ -24,7 +26,7 @@ dataset: init
 	$(BIN)/python ./preprocessing/cicids2017.py
 
 zeroday: init
-	$(BIN)/python ./preprocessing/cicids2017zeroday.py
+	$(BIN)/python ./preprocessing/cicids2017_2.py
 
 onlyAttacks: init
 	$(BIN)/python ./preprocessing/cicids2017onlyattacks.py

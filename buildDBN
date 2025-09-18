@@ -38,7 +38,7 @@ def main(config):
     utils.mkdir(LOG_DIR)
     setup_logging(save_dir=LOG_DIR, log_config=LOG_CONFIG_PATH)
 
-    model = models.load_model(model_name=config["auto_encoder"]["type"], params=config["auto_encoder"]["args"])
+    model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
     model.to(DEVICE)
 
     criterion = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
