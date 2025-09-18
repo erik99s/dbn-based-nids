@@ -41,22 +41,35 @@ def main(config):
     model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
     model.to(DEVICE)
 
-    criterion = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
-    optimizer = getattr(torch.optim, config["optimizer"]["type"])( params=model.parameters(), **config["optimizer"]["args"]) 
+    criterion = getattr(torch.nn, config["loss"]["type"])(**config["loss"]["args"])
+    optimizer = [
+            getattr(torch.optim, config["optimizer"]["type"])(params=m.parameters(), **config["optimizer"]["args"])
+            for m in model.models
+        ]
+    
     print("model, criterion and optimizer loaded")
  
-    train_loader, valid_loader, test_loader = dataset.load_data_ae(
+    _, _, train_loader, valid_loader, test_loader = dataset.load_data(
         data_path=DATA_DIR,
         batch_size=config["data_loader_ae"]["args"]["batch_size"],
+        index = 1
     )
 
-    model.fit(
+    model.fit(train_loader)
+
+    train_history = train(
+        model=model,
         criterion=criterion,
         optimizer=optimizer,
         train_loader=train_loader,
         valid_loader=valid_loader,
+        num_epochs=config["trainer"]["num_epochs"],
         device=DEVICE
     )
+
+    torch.save(model.state_dict(), "dbn_model_attack.pth")
+
+
 
     torch.save(model.state_dict(), "autoencoder_model_attacks.pth")
 

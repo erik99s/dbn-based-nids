@@ -45,9 +45,10 @@ def main(config):
     optimizer = getattr(torch.optim, config["optimizer"]["type"])( params=model.parameters(), **config["optimizer"]["args"]) 
     print("model, criterion and optimizer loaded")
  
-    train_loader, valid_loader, test_loader = dataset.load_data_ae(
+    train_loader, valid_loader,_,_, test_loader = dataset.load_data(
         data_path=DATA_DIR,
         batch_size=config["data_loader_ae"]["args"]["batch_size"],
+        index = 1
     )
 
     model.fit(

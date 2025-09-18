@@ -61,160 +61,131 @@ class FilteredDataset(Dataset):
         return feature, label
 
 
-def get_dataset(data_path: str, balanced: bool, knownAttacksGrouped: bool):
+def get_dataset(data_path: str, index: int):
 
-    if not knownAttacksGrouped:
-
-        pretrain_data = CICIDSDataset(
-            features_file=f"{data_path}/processed/pretrain/pretrain_features.pkl",
-            target_file=f"{data_path}/processed/pretrain/pretrain_labels.pkl",
+    if index == 0:
+        train_data = CICIDSDataset(
+            features_file=f"{data_path}/processed0/train/train_features.pkl",
+            target_file=f"{data_path}/processed0/train/train_labels.pkl",
             transform=torch.tensor,
             target_transform=torch.tensor
         )
-        if balanced:
-            train_data = CICIDSDataset(
-                features_file=f"{data_path}/processed3/train/train_features_balanced.pkl",
-                target_file=f"{data_path}/processed3/train/train_labels_balanced.pkl",
-                transform=torch.tensor,
-                target_transform=torch.tensor
-            )
-        else:
-            train_data = CICIDSDataset(
-                features_file=f"{data_path}/processed3/train/train_features.pkl",
-                target_file=f"{data_path}/processed3/train/train_labels.pkl",
-                transform=torch.tensor,
-                target_transform=torch.tensor
-            )
 
         val_data = CICIDSDataset(
-            features_file=f"{data_path}/processed3/val/val_features.pkl",
-            target_file=f"{data_path}/processed3/val/val_labels.pkl",
+            features_file=f"{data_path}/processed0/val/val_features.pkl",
+            target_file=f"{data_path}/processed0/val/val_labels.pkl",
             transform=torch.tensor,
             target_transform=torch.tensor
         )
 
         test_data = CICIDSDataset(
-            features_file=f"{data_path}/processed/test/test_features.pkl",
-            target_file=f"{data_path}/processed/test/test_labels.pkl",
+            features_file=f"{data_path}/processed0/test/test_features.pkl",
+            target_file=f"{data_path}/processed0/test/test_labels.pkl",
             transform=torch.tensor,
             target_transform=torch.tensor
         )
 
-    else: 
-        pretrain_data = CICIDSDataset(
-            features_file=f"{data_path}/processed2/pretrain/pretrain_features.pkl",
-            target_file=f"{data_path}/processed2/pretrain/pretrain_labels.pkl",
+        print(train_data.labels.value_counts())
+        print(val_data.labels.value_counts())
+        print(test_data.labels.value_counts())
+        return train_data, val_data, test_data
+
+    if index == 1:
+
+        train_AE_data = CICIDSDataset(
+            features_file=f"{data_path}/processed3/trainAE/train_AE_features.pkl",
+            target_file=f"{data_path}/processed3/trainAE/train_AE_labels.pkl",
             transform=torch.tensor,
             target_transform=torch.tensor
         )
 
-        if balanced:
-            train_data = CICIDSDataset(
-                features_file=f"{data_path}/processed2/train/train_features_balanced.pkl",
-                target_file=f"{data_path}/processed2/train/train_labels_balanced.pkl",
-                transform=torch.tensor,
-                target_transform=torch.tensor
-            )
-        else:
-            train_data = CICIDSDataset(
-                features_file=f"{data_path}/processed2/train/train_features.pkl",
-                target_file=f"{data_path}/processed2/train/train_labels.pkl",
-                transform=torch.tensor,
-                target_transform=torch.tensor
-            )
+        val_AE_data = CICIDSDataset(
+            features_file=f"{data_path}/processed3/valAE/val_AE_features.pkl",
+            target_file=f"{data_path}/processed3/valAE/val_AE_labels.pkl",
+            transform=torch.tensor,
+            target_transform=torch.tensor
+        )
 
-        val_data = CICIDSDataset(
-            features_file=f"{data_path}/processed2/val/val_features.pkl",
-            target_file=f"{data_path}/processed2/val/val_labels.pkl",
+        train_DBN_data = CICIDSDataset(
+            features_file=f"{data_path}/processed3/trainDBN/train_DBN_features.pkl",
+            target_file=f"{data_path}/processed3/trainDBN/train_DBN_labels.pkl",
+            transform=torch.tensor,
+            target_transform=torch.tensor
+        )
+
+        val_DBN_data = CICIDSDataset(
+            features_file=f"{data_path}/processed3/valDBN/val_DBN_features.pkl",
+            target_file=f"{data_path}/processed3/valDBN/val_DBN_labels.pkl",
             transform=torch.tensor,
             target_transform=torch.tensor
         )
 
         test_data = CICIDSDataset(
-            features_file=f"{data_path}/processed2/test/test_features.pkl",
-            target_file=f"{data_path}/processed2/test/test_labels.pkl",
+            features_file=f"{data_path}/processed3/test/test_features.pkl",
+            target_file=f"{data_path}/processed3/test/test_labels.pkl",
             transform=torch.tensor,
             target_transform=torch.tensor
         )
 
-    return pretrain_data, train_data, val_data, test_data
+        print(train_AE_data.labels.value_counts())
+        print(val_AE_data.labels.value_counts())
+        print(train_DBN_data.labels.value_counts())
+        print(val_DBN_data.labels.value_counts())
+        print(test_data.labels.value_counts())
 
-def get_dataset_ae(data_path: str):
-    train_data = CICIDSDataset(
-        features_file=f"{data_path}/processed0/train/train_features.pkl",
-        target_file=f"{data_path}/processed0/train/train_labels.pkl",
-        transform=torch.tensor,
-        target_transform=torch.tensor
-    )
-
-    val_data = CICIDSDataset(
-        features_file=f"{data_path}/processed0/val/val_features.pkl",
-        target_file=f"{data_path}/processed0/val/val_labels.pkl",
-        transform=torch.tensor,
-        target_transform=torch.tensor
-    )
-
-    test_data = CICIDSDataset(
-        features_file=f"{data_path}/processed0/test/test_features.pkl",
-        target_file=f"{data_path}/processed0/test/test_labels.pkl",
-        transform=torch.tensor,
-        target_transform=torch.tensor
-    )
-
-    print(train_data.labels.value_counts())
-    print(val_data.labels.value_counts())
-    print(test_data.labels.value_counts())
-    return train_data, val_data, test_data
+        return train_AE_data, val_AE_data, train_DBN_data, val_DBN_data, test_data
 
 
-def load_data(data_path: str, balanced: bool, batch_size: int, knownAttacksGrouped: bool):
-    """Load training, validation and test set."""
-    # Get the datasets
-    pretrain_data, train_data, val_data, test_data = get_dataset(data_path=data_path, balanced=balanced, knownAttacksGrouped=knownAttacksGrouped)
+def load_data(data_path: str, batch_size: int, index: int):
 
-    # Create the dataloaders - for training, validation and testing
-    pretrain_data = torch.utils.data.DataLoader(
-        dataset = pretrain_data,
-        batch_size = batch_size,
-        shuffle = True
-    )
-    train_loader = torch.utils.data.DataLoader(
-        dataset=train_data,
-        batch_size=batch_size,
-        shuffle=True
-    )
-    valid_loader = torch.utils.data.DataLoader(
-        dataset=val_data,
-        batch_size=batch_size,  
-        shuffle=True
-    )
-    test_loader = torch.utils.data.DataLoader(
-        dataset=test_data,
-        batch_size=1,
-        shuffle=False
-    )
+    if index == 0:
+        train_data, val_data, test_data = get_dataset(data_path=data_path, index=index)
 
-    return pretrain_data, train_loader, valid_loader, test_loader
+        train_loader = torch.utils.data.DataLoader(
+            dataset=train_data,
+            batch_size=batch_size,
+            shuffle=True
+        )
+        valid_loader = torch.utils.data.DataLoader(
+            dataset=val_data,
+            batch_size=batch_size,
+            shuffle=True
+        )
+        test_loader = torch.utils.data.DataLoader(
+            dataset=test_data,
+            batch_size=1,
+            shuffle=True
+        )
 
+        return train_loader, valid_loader, test_loader
 
-def load_data_ae(data_path: str, batch_size: int):
-    train_data, val_data, test_data = get_dataset_ae(data_path=data_path)
+    if index == 1:
+        train_AE_data, val_AE_data, train_DBN_data, val_DBN_data, test_data = get_dataset(data_path=data_path, index=index)
 
-    train_loader = torch.utils.data.DataLoader(
-        dataset=train_data,
-        batch_size=batch_size,
-        shuffle=True
-    )
-    valid_loader = torch.utils.data.DataLoader(
-        dataset=val_data,
-        batch_size=batch_size,
-        shuffle=True
-    )
-    test_loader = torch.utils.data.DataLoader(
-        dataset=test_data,
-        batch_size=1,
-        shuffle=True
-    )
+        train_AE_loader = torch.utils.data.DataLoader(
+            dataset=train_AE_data,
+            batch_size=batch_size,
+            shuffle=True
+        )
+        val_AE_loader = torch.utils.data.DataLoader(
+            dataset=val_AE_data,
+            batch_size=batch_size,
+            shuffle=True
+        )
+        train_DBN_loader = torch.utils.data.DataLoader(
+            dataset=train_DBN_data,
+            batch_size=batch_size,
+            shuffle=True
+        )
+        val_DBN_loader = torch.utils.data.DataLoader(
+            dataset=val_DBN_data,
+            batch_size=batch_size,
+            shuffle=True
+        )
+        test_loader = torch.utils.data.DataLoader(
+            dataset=test_data,
+            batch_size=1,
+            shuffle=True
+        )
 
-    return train_loader, valid_loader, test_loader
-
+        return train_AE_loader, val_AE_loader, train_DBN_loader, val_DBN_loader, test_data

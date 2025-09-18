@@ -50,9 +50,10 @@ def main(config):
     # loading the Auto Encoder
 
     logging.info("loading dataset for AE")
-    _, _, test_loader = dataset.load_data_ae(
+    _, _, _, _, test_loader = dataset.load_data(
         data_path=DATA_DIR,
         batch_size=config["data_loader_ae"]["args"]["batch_size"],
+        index = 1
     )
     logging.info("Datasets loaded")
    
@@ -249,6 +250,22 @@ def main(config):
     plt.savefig("reconstruction_losses_AE.png", dpi=300)
 
     plt.close()
+
+    filtered_test_data = dataset.FilteredDataset(
+        feature_file=featuresList,
+        target_file=labelsList,
+        transform=torch.tensor,
+        target_transform=torch.tensor
+    )
+
+    filtered_test_loader = torch.utils.data.DataLoader(
+        dataset = filtered_test_data,
+        batch_size = 1
+    )
+    
+    values = [t.item() for t in AE_labels]
+    counts = Counter(values)
+    print(counts)
 
     test_loss = 0.0
     test_steps = 0
