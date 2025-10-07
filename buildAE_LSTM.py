@@ -38,48 +38,33 @@ def main(config):
     utils.mkdir(LOG_DIR)
     setup_logging(save_dir=LOG_DIR, log_config=LOG_CONFIG_PATH)
 
-    model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
+    model = models.load_model(model_name=config["auto_encoder_LSTM"]["type"], params=config["auto_encoder_LSTM"]["args"])
     model.to(DEVICE)
 
-    criterion = getattr(torch.nn, config["loss"]["type"])(**config["loss"]["args"])
-    optimizer = [
-            getattr(torch.optim, config["optimizer"]["type"])(params=m.parameters(), **config["optimizer"]["args"])
-            for m in model.models
-        ]
-    
+
+    criterion = getattr(torch.nn, config["lossAE"]["type"])(**config["lossAE"]["args"])
+    optimizer = getattr(torch.optim, config["optimizer"]["type"])( params=model.parameters(), **config["optimizer"]["args"]) 
     print("model, criterion and optimizer loaded")
  
-    _, _, train_loader, valid_loader, test_loader = dataset.load_data(
+    train_loader, valid_loader,_,_, test_loader = dataset.load_data(
         data_path=DATA_DIR,
         batch_size=config["data_loader_ae"]["args"]["batch_size"],
         index = 1
     )
+    torch.save(model.state_dict(), "autoencoder_model_attacks.pth")
 
-    length = len(valid_loader)
-    print(length)
-
-    print("start training model")
-    model.fit(train_loader)
-
-    train_history = train(
-        model=model,
-        criterion=criterion,
-        optimizer=optimizer,
-        train_loader=train_loader,
-        valid_loader=valid_loader,
-        num_epochs=config["trainer"]["num_epochs"],
-        device=DEVICE
+    model.train_model(
+        train_loader = train_loader,
+        valid_loader = valid_loader,
+        optimizer = optimizer,
+        criterion = criterion,
+        device = DEVICE
     )
 
-    torch.save(model.state_dict(), "dbn_model_attack.pth")
-
-
-
-    torch.save(model.state_dict(), "autoencoder_model_attacks.pth")
 
     print("done training")
 
-    model.testingWithAttacks(
+    model.test_model(
         criterion=criterion,
         test_loader=test_loader,
         device=DEVICE

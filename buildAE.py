@@ -51,6 +51,9 @@ def main(config):
         index = 1
     )
 
+    print(type(train_loader))
+    print(type(test_loader))
+
     model.fit(
         criterion=criterion,
         optimizer=optimizer,
@@ -63,7 +66,7 @@ def main(config):
 
     print("done training")
 
-    model.testingWithAttacks(
+    model.test(
         criterion=criterion,
         test_loader=test_loader,
         device=DEVICE

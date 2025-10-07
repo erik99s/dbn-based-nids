@@ -83,7 +83,7 @@ def test(
     with torch.no_grad():
         for (inputs, labels) in tqdm(test_loader):
             inputs, labels = inputs.to(device), labels.to(device)
-            labels = labels.squeeze(1)
+            # labels = labels.squeeze(1)
 
             # calls the DBN on the input
             outputs = model(inputs)
@@ -104,7 +104,7 @@ def test(
             if lossAE.item() > 0.6:
                 above += 1
             
-            if labels == 1:
+            if labels == 0:
                 DBN_lossBenign.append(loss_DBN)
                 AE_lossBenign.append(lossAE.item())
                 # DBN_rec_lossBenign.append(reconstructed_DBN)
@@ -118,14 +118,15 @@ def test(
                 AE_lossAttack.append(lossAE.item())
                 # DBN_rec_lossAttack.append(reconstructed_DBN)
             """ 
-            _, predicted = torch.max(outputs.data, 1)
+            #_, predicted = torch.max(outputs, 1)
+            #_, predicted1 = torch.max(reconstructed, 1)
 
             test_total += labels.size(0)
-            test_correct += (predicted == labels).sum().item()
+            #test_correct += (predicted == labels).sum().item()
 
-            test_output_pred += outputs.argmax(1).cpu().tolist()
-            test_output_true += labels.tolist()
-            test_output_pred_prob += nn.functional.softmax(outputs, dim=0).cpu().tolist()
+            #test_output_pred += outputs.argmax(1).cpu().tolist()
+            #test_output_true += labels.tolist()
+            #test_output_pred_prob += nn.functional.softmax(outputs, dim=0).cpu().tolist()
     
     print(above)
 

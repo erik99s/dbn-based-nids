@@ -146,14 +146,16 @@ class CICIDS2017Preprocessor(object):
         val_benign = val[val['label_category'] == 'Benign']
         X_AE_val = val_benign.drop(labels=['label', 'label_category'], axis=1)
         y_AE_val = val_benign['label_category']
+
+        attackList = ['PortScan', 'DoS', 'Brute Force', 'Bot']
     
-        train_attacks = train[~train['label_category'].isin(['ZeroDay', 'Benign'])]
+        train_attacks = train[train['label_category'].isin(attackList)]
         X_DBN_train = train_attacks.drop(labels=['label', 'label_category'], axis=1)
-        y_DBN_train = train_benign['label_category']
+        y_DBN_train = train_attacks['label_category']
 
         val_attacks = val[~val['label_category'].isin(['ZeroDay', 'Benign'])]
         X_DBN_val = val_attacks.drop(labels=['label', 'label_category'], axis=1)
-        y_DBN_val = val_benign['label_category']
+        y_DBN_val = val_attacks['label_category']
 
         X_test = test.drop(labels=['label', 'label_category'], axis=1)
         y_test = test['label_category']
@@ -163,6 +165,10 @@ class CICIDS2017Preprocessor(object):
         print(y_AE_val.value_counts())
         print(y_DBN_val.value_counts())
         print(y_test.value_counts())
+
+        print(train_benign.head())
+        print(train_attacks.head())
+
 
         return (X_AE_train, y_AE_train), (X_AE_val, y_AE_val), (X_DBN_train, y_DBN_train), (X_DBN_val, y_DBN_val), (X_test, y_test)
     
@@ -198,7 +204,7 @@ class CICIDS2017Preprocessor(object):
 
         y_AE_train = pd.DataFrame(le.transform(y_AE_train), columns=["label"])
         y_DBN_train = pd.DataFrame(le.transform(y_DBN_train), columns=["label"])
-        y_AE_val = pd.DataFrame(le.transform(y_DBN_val), columns=["label"])
+        y_AE_val = pd.DataFrame(le.transform(y_AE_val), columns=["label"])
         y_DBN_val = pd.DataFrame(le.transform(y_DBN_val), columns=["label"])
         y_test = pd.DataFrame(le.transform(y_test), columns=["label"])
 
@@ -212,7 +218,7 @@ class CICIDS2017Preprocessor(object):
         print(y_test['label'].value_counts())
 
 
-        return (X_AE_train, y_AE_train), (X_DBN_train, y_DBN_train), (X_AE_val, y_AE_val), (X_DBN_val, y_DBN_val), (X_test, y_test)
+        return (X_AE_train, y_AE_train), (X_AE_val, y_AE_val), (X_DBN_train, y_DBN_train), (X_DBN_val, y_DBN_val), (X_test, y_test)
 
 
 if __name__ == "__main__":

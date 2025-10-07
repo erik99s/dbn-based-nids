@@ -25,14 +25,21 @@ class CICIDSDataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        feature = self.features.iloc[idx, :]
+    # Extract feature row and label from the DataFrame
+        feature = self.features.iloc[idx, :].values  # .values gives numpy array
         label = self.labels.iloc[idx]
-        if self.transform:
-            feature = self.transform(feature.values, dtype=torch.float32)
-        if self.target_transform:
-            label = self.target_transform(label, dtype=torch.int64)
-        return feature, label
 
+        # Convert to torch tensors with proper dtype
+        feature = torch.tensor(feature, dtype=torch.float32)
+        label = torch.tensor(label, dtype=torch.long)
+
+        # Apply optional transforms
+        if self.transform:
+            feature = self.transform(feature)  # transform should handle dtype internally
+        if self.target_transform:
+            label = self.target_transform(label)
+
+        return feature, label
 class FilteredDataset(Dataset):
     def __init__(self, feature_file, target_file, transform=None, target_transform=None):
 
@@ -50,16 +57,16 @@ class FilteredDataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        feature = self.features[idx]   # list indexing
-        label = self.labels[idx]
-
+        
+        feature = torch.tensor(self.features.iloc[idx].values, dtype=torch.float32)  # shape: (49,)
+        label = torch.tensor(self.labels.iloc[idx], dtype=torch.long) 
+        """
         if self.transform:
-            feature = self.transform(feature, dtype=torch.float32)
+            feature = self.transform(feature.values, dtype=torch.float32)
         if self.target_transform:
             label = self.target_transform(label, dtype=torch.int64)
-        
+        """
         return feature, label
-
 
 def get_dataset(data_path: str, index: int):
 
@@ -138,6 +145,8 @@ def get_dataset(data_path: str, index: int):
 
 def load_data(data_path: str, batch_size: int, index: int):
 
+    print(f"batch size: {batch_size}")
+
     if index == 0:
         train_data, val_data, test_data = get_dataset(data_path=data_path, index=index)
 
@@ -153,7 +162,7 @@ def load_data(data_path: str, batch_size: int, index: int):
         )
         test_loader = torch.utils.data.DataLoader(
             dataset=test_data,
-            batch_size=1,
+            batch_size=batch_size,
             shuffle=True
         )
 
@@ -188,4 +197,4 @@ def load_data(data_path: str, batch_size: int, index: int):
             shuffle=True
         )
 
-        return train_AE_loader, val_AE_loader, train_DBN_loader, val_DBN_loader, test_data
+        return train_AE_loader, val_AE_loader, train_DBN_loader, val_DBN_loader, test_loader

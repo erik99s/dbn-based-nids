@@ -3,12 +3,6 @@ import logging
 
 import torch
 import torch.nn as nn
-from keras.models import Sequential
-from keras.layers import LSTM, Input, Dropout
-from keras.layers import Dense
-from keras.layers import RepeatVector
-from keras.layers import TimeDistributed
-from keras.models import Model
 
 import torch.optim as optim
 
@@ -20,8 +14,8 @@ import numpy as np
 class AE(nn.Module): 
     def __init__(self,
                  n_visible=49,
-                 n_hidden=(25,10,5),
-                 n_classes=2,
+                 n_hidden=[128,64],
+                 n_classes=32,
                  learning_rate=1e-3,
                  batch_size=64,
                  num_epochs=10,
@@ -47,6 +41,20 @@ class AE(nn.Module):
         self.batch_size = batch_size
         self.num_epochs = num_epochs
 
+        """
+        self.encoder = nn.Sequential(
+            nn.Linear(n_visible, n_hidden[0]),
+            nn.ReLU(),
+            nn.Linear(n_hidden[0],n_classes)
+        )
+
+        self.decoder = nn.Sequential(
+            nn.Linear(n_classes,n_hidden[0]),
+            nn.ReLU(),
+            nn.Linear(n_hidden[0],n_visible)
+        )
+
+    
         self.encoder = nn.Sequential(
             nn.Linear(n_visible, n_hidden[0]),
             nn.ReLU(),
@@ -70,9 +78,34 @@ class AE(nn.Module):
             nn.ReLU(),
             nn.Linear(n_hidden[0], n_visible)
         )
+
+        """
+
+        self.encoder = nn.Sequential(
+            nn.Linear(49, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(32, 8)
+)
+        # Decoder layers
+        
+        self.decoder = nn.Sequential(
+            nn.Linear(8, 32),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(32, 64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(64, 49),
+            nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
+        )
+
         # For every possible layer
 
-        # Creating the Fully Connected layer to append on top of DBNs
+        # Creating the Fully Connected layer to append on t op of DBNs
        
     
     def mse(self, batch):
@@ -91,10 +124,10 @@ class AE(nn.Module):
             valid_loader: torch.utils.data.DataLoader,
             device
         ):
+        print(self)
         for epoch in range(self.num_epochs):
+            logging.info(f"Epoch {epoch+1}/{self.num_epochs}:")
             self.train()
-
-            logging.info(f"Epoch {epoch}/{self.num_epochs}:")
             total_loss = 0
             total_train_loss = 0
             # training loop
@@ -129,56 +162,7 @@ class AE(nn.Module):
 
             """
 
-
-    def testing(
-            self: torch.nn.Module,
-            criterion: torch.nn.Module,
-            test_loader: torch.utils.data.DataLoader,
-            device
-        ):
-
-        self.eval()
-
-        losslist = []
-        total_test_loss = 0
-        total_test_loss_benign = 0
-        total_test_loss_zero = 0
-
-        mse1 = 0
-        mse2 = 0
-
-        lossBenign = []
-        lossZero = []
-        with torch.no_grad():
-            for input, labels in tqdm(test_loader):
-                input = input.to(device)
-                reconstructed = self.forward(input)
-                loss = criterion(reconstructed, input)
-                losslist.append(loss.item())
-                total_test_loss += loss.item() 
-                if labels.item() == 0:
-                    total_test_loss_benign += loss.item()
-                    lossBenign.append(loss.item())
-                    mse1 += torch.sum(torch.pow(input - reconstructed, 2))
-                else:
-                    total_test_loss_zero += loss.item()
-                    lossZero.append(loss.item())
-                    mse2 = torch.sum(torch.pow(input - reconstructed, 2))
-            avg_test_loss = total_test_loss/len(test_loader)
-            avg_test_loss_benign = total_test_loss_benign/len(lossBenign)
-            avg_test_loss_zero = total_test_loss_zero/len(lossZero)
-            avg_mse_benign = mse1 / len(lossBenign)
-            avg_mse_zero = mse2 / len(lossZero)
-        
-        print( f"Test Loss: {avg_test_loss:.6f}")
-        print( f"Test Loss: {avg_test_loss_benign:.6f}")
-        print( f"Test Loss: {avg_test_loss_zero:.6f}")
-
-        print( f"Test MSE: {avg_mse_benign:.6f}")
-        print( f"Test MSE: {avg_mse_zero:.6f}")
-
-
-    def testingWithAttacks(
+    def test(
             self: torch.nn.Module,
             criterion: torch.nn.Module,
             test_loader: torch.utils.data.DataLoader,
@@ -202,24 +186,25 @@ class AE(nn.Module):
         lossZero = []
 
         with torch.no_grad():
-            for input, labels in tqdm(test_loader):
-                input = input.to(device)
-                reconstructed = self(input)
-                loss = criterion(reconstructed, input)
+            for inputs, labels in tqdm(test_loader):
+                inputs = inputs.to(device)
+                reconstructed = self(inputs)
+                loss = criterion(reconstructed, inputs)
                 losslist.append(loss.item())
                 total_test_loss += loss.item() 
                 if labels.item() == 0:
                     total_test_loss_benign += loss.item()
                     lossBenign.append(loss.item())
-                    mse1 += torch.sum(torch.pow(input - reconstructed, 2))
+                    mse1 += torch.sum(torch.pow(inputs - reconstructed, 2))
                 elif labels.item() == 5:
                     total_test_loss_zero += loss.item()
                     lossZero.append(loss.item())
-                    mse2 += torch.sum(torch.pow(input - reconstructed, 2))
+                    mse2 += torch.sum(torch.pow(inputs - reconstructed, 2))
                 else:
                     total_test_loss_attacks += loss.item()
                     lossAttack.append(loss.item())
-                    mse3 += torch.sum(torch.pow(input - reconstructed,2))                  
+                    mse3 += torch.sum(torch.pow(inputs - reconstructed,2))  
+                               
             avg_test_loss = total_test_loss/len(test_loader)
             avg_test_loss_benign = total_test_loss_benign/len(lossBenign)
             avg_test_loss_attack = total_test_loss_attacks/len(lossAttack)
@@ -228,14 +213,18 @@ class AE(nn.Module):
             avg_mse_attack = mse3 / len(lossAttack)
             avg_mse_zero = mse2 / len(lossZero)
 
-            maxBenign = min(lossBenign)
-            minBenign = max(lossBenign)
+            minBenign = min(lossBenign)
+            maxBenign = max(lossBenign)
             minZero = min(lossZero)
             maxZero = max(lossZero)
             minAttack = min(lossAttack)
             maxAttack = max(lossAttack)
+                
+            avg_test_loss = total_test_loss/len(test_loader)
+            print(total_test_loss)
+            print(avg_test_loss)
+            
 
-        
         print( f"Test Loss: {avg_test_loss:.6f}")
         print( f"Test Loss: {avg_test_loss_benign:.6f}")
         print( f"Test Loss: {avg_test_loss_attack:.6f}")
@@ -245,7 +234,10 @@ class AE(nn.Module):
         print( f"Test MSE: {avg_mse_attack:.6f}")
         print( f"Test MSE: {avg_mse_zero:.6f}")
 
-        print( f"{maxBenign} : {minBenign} : {minZero} : {maxZero} : {minAttack} : {maxAttack}")
+        print( f"{minBenign} : {maxBenign} : {minZero} : {maxZero} : {minAttack} : {maxAttack}")
+
+
+
 
         plt.figure(figsize=(12, 8))
 
@@ -274,9 +266,27 @@ class AE(nn.Module):
         plt.tight_layout()
         plt.savefig("reconstruction_losses.png", dpi=300)
     
+        plt.close()
 
-        
+        plt.figure(figsize=(12,8))
 
+        plt.hist(lossBenign, bins=100, alpha=0.5, label='Benign')   
+        plt.hist(lossAttack, bins=100, alpha=0.5, label='Attacks')
+        plt.hist(lossZero, bins=100, alpha=0.5, label='ZeroDay')
+        plt.title("reconstuction hist")
+        plt.legend()
+        plt.savefig("reconstruction hist.png", dpi=300)
+
+        """
+        plt.figure(figsize=(12,8))
+
+        plt.plot(range(len(losslist)),losslist,label='loss', color='green')
+        plt.ylabel('loss')
+        plt.title('Reconstruction Loss Aute encoder')
+        plt.legend()
+        plt.tight_layout
+        plt.savefig("reconstructio_loss_batch.png", dpi=300)
+        """
 
     
     
