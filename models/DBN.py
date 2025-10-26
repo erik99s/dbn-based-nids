@@ -164,6 +164,7 @@ class DBN(nn.Module):
 
         # Resetting MSE to zero
         mse = 0
+        criterion = nn.MSELoss()
 
         # Applying the initial hidden probabilities as the input_data
         hidden_probs = input
@@ -191,8 +192,7 @@ class DBN(nn.Module):
                 visible_probs)
 
         # Calculating current's batch reconstruction MSE
-        mse = torch.div(
-            torch.sum(torch.pow(input - visible_states, 2)), 1)
+        mse = criterion(visible_probs,input)
         
         # Summing up to reconstruction's MSE
         # .item() makes it a float

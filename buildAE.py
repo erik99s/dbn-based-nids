@@ -3,6 +3,8 @@ import numpy as np
 import argparse
 import os
 
+import torch.nn as nn
+
 from logger import setup_logging
 
 import torch
@@ -38,27 +40,31 @@ def main(config):
     utils.mkdir(LOG_DIR)
     setup_logging(save_dir=LOG_DIR, log_config=LOG_CONFIG_PATH)
 
-    model = models.load_model(model_name=config["auto_encoder"]["type"], params=config["auto_encoder"]["args"])
+    model = models.load_model(model_name=config["auto_encoder_2nd"]["type"], params=config["auto_encoder_2nd"]["args"])
     model.to(DEVICE)
 
-    criterion = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
+    # criterion = getattr(torch.nn, config["lossAE"]["type"])(**config["lossAE"]["args"])
+    # criterion = nn.CrossEntropyLoss()
+    # criterion = nn.L1Loss(reduction='mean')
+    # criterion = nn.SmoothL1Loss(beta=0.1)
+    criterion = nn.MSELoss(reduction='mean')
+
+
     optimizer = getattr(torch.optim, config["optimizer"]["type"])( params=model.parameters(), **config["optimizer"]["args"]) 
     print("model, criterion and optimizer loaded")
  
-    train_loader, valid_loader,_,_, test_loader = dataset.load_data(
+    train_loader, valid_loader,train_loader_attacks,valid_loader_attacks, test_loader = dataset.load_data(
         data_path=DATA_DIR,
         batch_size=config["data_loader_ae"]["args"]["batch_size"],
         index = 1
     )
 
-    print(type(train_loader))
-    print(type(test_loader))
 
     model.fit(
         criterion=criterion,
         optimizer=optimizer,
-        train_loader=train_loader,
-        valid_loader=valid_loader,
+        train_loader=train_loader_attacks,
+        valid_loader=valid_loader_attacks,
         device=DEVICE
     )
 

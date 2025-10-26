@@ -140,6 +140,8 @@ def get_dataset(data_path: str, index: int):
         print(val_DBN_data.labels.value_counts())
         print(test_data.labels.value_counts())
 
+        print(type(test_data.labels))
+
         return train_AE_data, val_AE_data, train_DBN_data, val_DBN_data, test_data
 
 
@@ -197,4 +199,34 @@ def load_data(data_path: str, batch_size: int, index: int):
             shuffle=True
         )
 
+        print(batch_size)
+
         return train_AE_loader, val_AE_loader, train_DBN_loader, val_DBN_loader, test_loader
+    
+def get_filtered(data_path: str):
+    filtered_data = CICIDSDataset(
+        features_file=f"{data_path}/filtered/features/features.pkl",
+        target_file=f"{data_path}/filtered/labels/labels.pkl",
+        transform=torch.tensor,
+        target_transform=torch.tensor
+    )
+
+    print(type(filtered_data.labels))
+
+    print(filtered_data.labels.value_counts())
+
+    return filtered_data
+
+def load_filtered(data_path: str):
+
+    featured_data = get_filtered(data_path=data_path)
+
+    filter_loader = torch.utils.data.DataLoader(
+        dataset=featured_data,
+        batch_size=1,
+        shuffle=True
+    )
+
+    return filter_loader
+
+

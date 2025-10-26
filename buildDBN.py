@@ -49,18 +49,17 @@ def main(config):
     
     print("model, criterion and optimizer loaded")
  
-    _, _, train_loader, valid_loader, test_loader = dataset.load_data(
+    train_loader, valid_loader, _, _, test_loader = dataset.load_data(
         data_path=DATA_DIR,
         batch_size=config["data_loader_ae"]["args"]["batch_size"],
         index = 1
     )
 
-    length = len(valid_loader)
-    print(length)
-
-    print("start training model")
+    print("start pre-training model")
     model.fit(train_loader)
 
+
+    print("start training model")
     train_history = train(
         model=model,
         criterion=criterion,
@@ -71,15 +70,12 @@ def main(config):
         device=DEVICE
     )
 
-    torch.save(model.state_dict(), "dbn_model_attack.pth")
-
-
-
-    torch.save(model.state_dict(), "autoencoder_model_attacks.pth")
+    torch.save(model.state_dict(), "dbn_model.pth")
 
     print("done training")
 
-    model.testingWithAttacks(
+    test_history = test(
+        model=model,
         criterion=criterion,
         test_loader=test_loader,
         device=DEVICE

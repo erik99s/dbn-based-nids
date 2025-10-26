@@ -6,7 +6,8 @@ import logging
 import os
 
 import torch
-import torch.optim as optim
+
+import torch.nn as nn
 
 import sys
 
@@ -50,19 +51,44 @@ def main(config):
     )
     logging.info("Datasets loaded")
    
-    auto_encoder = models.load_model(model_name=config["auto_encoder"]["type"], params=config["auto_encoder"]["args"])
-    auto_encoder.load_state_dict(torch.load("./autoencoder_model_attacks.pth"))
+    auto_encoder = models.load_model(model_name=config["auto_encoder_1st"]["type"], params=config["auto_encoder_1st"]["args"])
+    auto_encoder.load_state_dict(torch.load("./stored_models/autoencoder_model_attacks_1st_100.pth"))
     auto_encoder.to(DEVICE)
 
-    criterionAE = getattr(torch.nn, config["lossAE"]["type"])(**config["loss"]["args"])
+    criterion = nn.MSELoss(reduction='mean')
 
     print(auto_encoder)
 
-    auto_encoder.test(
-        criterion=criterionAE,        
+    result = auto_encoder.test(
+        criterion=criterion,        
         test_loader=test_loader,
         device=DEVICE
     )
+
+    print(result)
+
+    print("first test done")
+
+    test_loader = dataset.load_filtered(
+        data_path=DATA_DIR,
+    )
+
+    auto_encoder = models.load_model(model_name=config["auto_encoder_2nd"]["type"], params=config["auto_encoder_2nd"]["args"])
+    auto_encoder.load_state_dict(torch.load("./stored_models/autoencoder_model_2nd_120.pth"))
+    auto_encoder.to(DEVICE)
+
+    print(auto_encoder)
+
+    result = auto_encoder.testZero(
+        criterion=criterion,        
+        test_loader=test_loader,
+        device=DEVICE
+    )
+
+    print(result)
+
+
+
 
 
 if __name__ == "__main__":

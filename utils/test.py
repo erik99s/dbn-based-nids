@@ -7,12 +7,9 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 def test(
     model: torch.nn.Module,
-    auto_encoder: torch.nn.Module,
     criterion: torch.nn.Module,
-    criterionAE: torch.nn.Module,
     test_loader: torch.utils.data.DataLoader,
     device: torch.device,
 ):
@@ -38,198 +35,126 @@ def test(
 
     
     model.eval()
-
-    history = {
-        'test': {
-            'total': 0,
-            'loss': 0.0,
-            'accuracy': 0.0,
-            'output_pred': [],
-            'output_true': [],
-            'output_pred_prob': []
+    result = {
+            'test': {
+                'avg_test_loss': 0.0,
+                'tp': 0.0,
+                'tn': 0.0,
+                'fp': 0.0,
+                'fn': 0.0,
+                'precision': 0.0,
+                'recall': 0.0,
+                'f1_score': 0.0
+            }
         }
-    }
 
-    test_loss = 0.0
-    test_steps = 0
-    test_total = 0
-    test_correct = 0
+    model.eval()
 
-    test_output_pred = []
-    test_output_true = []
-    test_output_pred_prob = []
+    test
 
-    DBN_lossBenign = []
-    DBN_lossAttack = []
-    DBN_lossZero = []
+    loss_list_mse = []
+    loss_list_dbn = []
+    label_list = []
+    total_test_loss = 0
+    loss_Benign = []
+    loss_Benign_mse = []
+    loss_Attack = []
+    loss_Attack_mse = []
+    loss_Zero = []
+    loss_Zero_mse = []
 
-    AE_lossBenign = []
-    AE_lossAttack = []
-    AE_lossZero = []
+    tp = 0
+    fp = 0 
+    tn = 0 
+    fn = 0
 
-    DBN_rec_lossBenign = []
-    DBN_rec_lossAttack = []
-    DBN_rec_lossZero = []
-
-    listOfPredictedAttacks = []
-
-    above = 0
-
-    
-
-    mseList = []
-    mseListZero = []
+    percentile: int = 75
 
     with torch.no_grad():
         for (inputs, labels) in tqdm(test_loader):
             inputs, labels = inputs.to(device), labels.to(device)
-            # labels = labels.squeeze(1)
+            labels = labels.squeeze(1)
 
             # calls the DBN on the input
             outputs = model(inputs)
             loss = criterion(outputs, labels)
-            test_loss += loss.cpu().item()
-            test_steps += 1
+            total_test_loss += loss.cpu().item()
 
-            loss_DBN = criterion(outputs,labels)
+            loss = criterion(outputs,labels)
+            mse, _ = model.reconstructOne(inputs)
 
-             # reconstructs the data using the Auto encoder
-            reconstructed = auto_encoder(inputs)
-            lossAE = criterionAE(reconstructed, labels)
+            loss_list_dbn.append(loss.item())
+            loss_list_mse.append(mse.item())
+            label_list.append(labels.item())
 
-
-
-            # reconstruction DBN using reconstruct one
-            # reconstructed_DBN = model.reconstructOne(inputs)
-            if lossAE.item() > 0.6:
-                above += 1
             
-            if labels == 0:
-                DBN_lossBenign.append(loss_DBN)
-                AE_lossBenign.append(lossAE.item())
-                # DBN_rec_lossBenign.append(reconstructed_DBN)
+            if labels.item() == 0:
+                loss_Benign.append(loss.item())
+                loss_Benign_mse.append(mse.item())
+            elif labels.item() == 5:
+                loss_Zero.append(loss.item())
+                loss_Zero_mse.append(mse.item())
             else:
-                DBN_lossZero.append(loss_DBN)
-                AE_lossZero.append(lossAE.item())
-                # DBN_rec_lossZero.append(reconstructed_DBN)
-            """   
+                loss_Attack.append(loss.item())
+                loss_Attack_mse.append(mse.item())
+                                
+    avg_test_loss = total_test_loss/len(test_loader)
+    print(total_test_loss)
+    print(avg_test_loss)
+
+    threshold_dbn = np.percentile(loss_list_dbn, percentile)
+    threshold_mse = np.percentile(loss_list_mse, percentile)
+
+    print(f"threshold_dbn: {threshold_dbn}")
+    print(f"threshold_mse: {threshold_mse}")
+
+    for loss, label in zip(loss_list_mse, label_list):
+        if loss < threshold_mse:
+            # prediction = Benign
+            if label == 0:
+                tn += 1
             else:
-                DBN_lossAttack.append(loss_DBN)
-                AE_lossAttack.append(lossAE.item())
-                # DBN_rec_lossAttack.append(reconstructed_DBN)
-            """ 
-            #_, predicted = torch.max(outputs, 1)
-            #_, predicted1 = torch.max(reconstructed, 1)
+                fn +=1
+        else:
+            # prediction = Attack
+            if label == 0:
+                fp += 1
+            else:
+                tp += 1
 
-            test_total += labels.size(0)
-            #test_correct += (predicted == labels).sum().item()
-
-            #test_output_pred += outputs.argmax(1).cpu().tolist()
-            #test_output_true += labels.tolist()
-            #test_output_pred_prob += nn.functional.softmax(outputs, dim=0).cpu().tolist()
+        
+    print(f"values:  tp: {tp} tn: {tn} fp: {fp} fn: {fn}")
     
-    print(above)
+    precision = tp / (tp + fp + 1e-8)
+    recall = tp / (tp + fn + 1e-8)
+    f1_score = 2 * precision * recall / (precision + recall + 1e-8)
 
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(12,8))
 
-    # Plot benign
-    plt.subplot(3, 1, 1)
-    plt.plot(range(len(AE_lossBenign)), AE_lossBenign, label="Benign", color="green")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Benign)")
+    plt.hist(loss_Benign, bins=100, alpha=0.5, label='Benign')   
+    plt.hist(loss_Attack, bins=100, alpha=0.5, label='Attacks')
+    plt.hist(loss_Zero, bins=100, alpha=0.5, label='ZeroDay')
+    plt.title("reconstuction hist")
     plt.legend()
+    plt.savefig("reconstruction hist_dbn_dbn.png", dpi=300)
 
-    # Plot attack
-    plt.subplot(3, 1, 2)
-    plt.plot(range(len(AE_lossAttack)), AE_lossAttack, label="Attacks", color="red")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Attacks)")
+    plt.figure(figsize=(12,8))
+
+    plt.hist(loss_Benign_mse, bins=100, alpha=0.5, label='Benign')   
+    plt.hist(loss_Attack_mse, bins=100, alpha=0.5, label='Attacks')
+    plt.hist(loss_Zero_mse, bins=100, alpha=0.5, label='ZeroDay')
+    plt.title("reconstuction hist")
     plt.legend()
-
-    # Plot zero-day
-    plt.subplot(3, 1, 3)
-    plt.plot(range(len(AE_lossZero)), AE_lossZero, label="Zero-day", color="blue")
-    plt.xlabel("Index (sample)")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Zero-day)")
-    plt.legend()
-
-    plt.tight_layout()
-    plt.savefig("reconstruction_losses_AE.png", dpi=300)
-
-    plt.close()
+    plt.savefig("reconstruction hist_dbn_mse.png", dpi=300)
 
 
-    plt.figure(figsize=(12, 8))
+    result['test']['avg_test_loss'] = avg_test_loss
+    result['test']['tp'] = tp
+    result['test']['tn'] = tn
+    result['test']['fp'] = fp
+    result['test']['fn'] = fn
+    result['test']['precision'] = precision
+    result['test']['recall'] = recall
+    result['test']['f1_score'] = f1_score
 
-    # Plot benign
-    plt.subplot(3, 1, 1)
-    plt.plot(range(len(DBN_lossBenign)), DBN_lossBenign, label="Benign", color="green")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Benign)")
-    plt.legend()
-
-    # Plot attack
-    plt.subplot(3, 1, 2)
-    plt.plot(range(len(DBN_lossAttack)), DBN_lossAttack, label="Attacks", color="red")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Attacks)")
-    plt.legend()
-
-    # Plot zero-day
-    plt.subplot(3, 1, 3)
-    plt.plot(range(len(DBN_lossZero)), DBN_lossZero, label="Zero-day", color="blue")
-    plt.xlabel("Index (sample)")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Zero-day)")
-    plt.legend()
-
-    plt.tight_layout()
-    plt.savefig("reconstruction_losses_DBN.png", dpi=300)
-
-    plt.close()
-
-    """
-    plt.figure(figsize=(12, 8))
-
-    # Plot benign
-    plt.subplot(3, 1, 1)
-    plt.plot(range(len(DBN_rec_lossBenign)), DBN_rec_lossBenign, label="Benign", color="green")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Benign)")
-    plt.legend()
-
-    # Plot attack
-    plt.subplot(3, 1, 2)
-    plt.plot(range(len(DBN_rec_lossAttack)), DBN_rec_lossAttack, label="Attacks", color="red")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Attacks)")
-    plt.legend()
-
-    # Plot zero-day
-    plt.subplot(3, 1, 3)
-    plt.plot(range(len(DBN_rec_lossZero)), DBN_rec_lossZero, label="Zero-day", color="blue")
-    plt.xlabel("Index (sample)")
-    plt.ylabel("Loss")
-    plt.title("Reconstruction Loss (Zero-day)")
-    plt.legend()
-
-    plt.tight_layout()
-    plt.savefig("reconstruction_losses_rec_DBN.png", dpi=300)
-
-    plt.close()
-
-    """
-
-    
-
-    history['test']['total'] = test_total
-    history['test']['loss'] = test_loss/test_steps
-    history['test']['accuracy'] = test_correct/test_total
-    history['test']['output_pred'] = test_output_pred
-    history['test']['output_true'] = test_output_true
-    history['test']['output_pred_prob'] = test_output_pred_prob
-
-    logging.info(f'Test loss: {test_loss/test_steps}, Test accuracy: {test_correct/test_total}')
-
-    return history
+    return result

@@ -14,7 +14,7 @@
             "k": [1, 1, 1, 1]
         }
     },
-    "auto_encoder": {
+    "auto_encoder_1st": {
         "type": "AE",
         "args": {
             "n_visible": 49,
@@ -25,16 +25,15 @@
             "num_epochs": 50
         }
     },
-    "auto_encoder_LSTM":{
-        "type": "AE_LSTM",
+    "auto_encoder_2nd":{
+        "type": "AE",
         "args": {
-            "n_features": 49,
-            "layers": [128,64],
-            "latent_dim": 32,
+            "n_visible": 49,
+            "n_hidden": [256,128],
+            "n_classes": 64,
             "learning_rate": 1e-3,
-            "timesteps": 1,
             "batch_size": 64,
-            "num_epochs": 10
+            "num_epochs": 50
         } 
     },
     "data_loader": {

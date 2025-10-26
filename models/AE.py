@@ -7,9 +7,15 @@ import torch.nn as nn
 import torch.optim as optim
 
 import seaborn as sns
+import pandas as pd
 
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+
+
+DATA_DIR  = os.path.join(os.path.abspath("."), "data")
 
 class AE(nn.Module): 
     def __init__(self,
@@ -82,24 +88,22 @@ class AE(nn.Module):
         """
 
         self.encoder = nn.Sequential(
-            nn.Linear(49, 64),
+            nn.Linear(49, 32),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(64, 32),
+            nn.Linear(32, 16),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(32, 8)
+            nn.Linear(16, 8)
 )
         # Decoder layers
         
         self.decoder = nn.Sequential(
-            nn.Linear(8, 32),
+            nn.Linear(8, 16),
             nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(32, 64),
+            nn.Linear(16, 32),
             nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(64, 49),
+            nn.Linear(32, 49),
             nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
         )
 
@@ -128,7 +132,6 @@ class AE(nn.Module):
         for epoch in range(self.num_epochs):
             logging.info(f"Epoch {epoch+1}/{self.num_epochs}:")
             self.train()
-            total_loss = 0
             total_train_loss = 0
             # training loop
             for batch , _ in tqdm(train_loader):
@@ -138,14 +141,13 @@ class AE(nn.Module):
                 loss = criterion(reconstructed, batch)
                 loss.backward()                 # computes grads for ALL params
                 optimizer.step()           # updates ALL params
-                total_train_loss += loss.item()
+                total_train_loss += loss
             
             avg_train_loss = total_train_loss / len(train_loader)
-            print(f"[Epoch {epoch+1}/{self.num_epochs}] Loss: {total_loss/len(train_loader):.6f}")
+            print(f"[Epoch {epoch+1}/{self.num_epochs}] Loss: {avg_train_loss:.6f}")
 
             # validation loop
             # Commented for now as it was used to figure out the amount of epochs needed
-            """
             self.eval()
             total_val_loss = 0
             with torch.no_grad():   # no gradient computation
@@ -160,8 +162,6 @@ class AE(nn.Module):
             print(f"[Epoch {epoch+1}/{self.num_epochs}] "
             f"Train Loss: {avg_train_loss:.6f} | Val Loss: {avg_val_loss:.6f}")
 
-            """
-
     def test(
             self: torch.nn.Module,
             criterion: torch.nn.Module,
@@ -169,166 +169,220 @@ class AE(nn.Module):
             device
         ):
 
+        result = {
+        'test': {
+            'avg_test_loss': 0.0,
+            'tp': 0.0,
+            'tn': 0.0,
+            'fp': 0.0,
+            'fn': 0.0,
+            'accuracy': 0.0,
+            'precision': 0.0,
+            'recall': 0.0,
+            'f1_score': 0.0
+        }
+    }
+
         self.eval()
 
-        losslist = []
+        loss_list = []
+        label_list = []
+        features_list = []
         total_test_loss = 0
-        total_test_loss_benign = 0
-        total_test_loss_attacks = 0
-        total_test_loss_zero = 0
+        loss_Benign = []
+        loss_Attack = []
+        loss_Zero = []
 
-        mse1 = 0
-        mse2 = 0
-        mse3 = 0
+        tp = 0
+        fp = 0 
+        tn = 0 
+        fn = 0
 
-        lossBenign = []
-        lossAttack = []
-        lossZero = []
+        percentile: int = 66
 
         with torch.no_grad():
-            for inputs, labels in tqdm(test_loader):
+            for inputs, label in tqdm(test_loader):
                 inputs = inputs.to(device)
-                reconstructed = self(inputs)
-                loss = criterion(reconstructed, inputs)
-                losslist.append(loss.item())
+                output = self(inputs)
+                loss = criterion(output, inputs)
+                loss_list.append((loss.item()))
+                label_list.append(label.item())
+                features_list.append(inputs.detach().cpu().numpy().squeeze())
                 total_test_loss += loss.item() 
-                if labels.item() == 0:
-                    total_test_loss_benign += loss.item()
-                    lossBenign.append(loss.item())
-                    mse1 += torch.sum(torch.pow(inputs - reconstructed, 2))
-                elif labels.item() == 5:
-                    total_test_loss_zero += loss.item()
-                    lossZero.append(loss.item())
-                    mse2 += torch.sum(torch.pow(inputs - reconstructed, 2))
+                if label.item() == 0:
+                    loss_Benign.append(loss.item())
+                elif label.item() == 4:
+                    loss_Zero.append(loss.item())
                 else:
-                    total_test_loss_attacks += loss.item()
-                    lossAttack.append(loss.item())
-                    mse3 += torch.sum(torch.pow(inputs - reconstructed,2))  
+                    loss_Attack.append(loss.item())
                                
-            avg_test_loss = total_test_loss/len(test_loader)
-            avg_test_loss_benign = total_test_loss_benign/len(lossBenign)
-            avg_test_loss_attack = total_test_loss_attacks/len(lossAttack)
-            avg_test_loss_zero = total_test_loss_zero/len(lossZero)
-            avg_mse_benign = mse1 / len(lossBenign)
-            avg_mse_attack = mse3 / len(lossAttack)
-            avg_mse_zero = mse2 / len(lossZero)
-
-            minBenign = min(lossBenign)
-            maxBenign = max(lossBenign)
-            minZero = min(lossZero)
-            maxZero = max(lossZero)
-            minAttack = min(lossAttack)
-            maxAttack = max(lossAttack)
-                
             avg_test_loss = total_test_loss/len(test_loader)
             print(total_test_loss)
             print(avg_test_loss)
+
+            threshold = np.percentile(loss_list, percentile)
+
+            print(f"threshold: {threshold}" )
+
+
+            anomaly_features = []
+            anomaly_labels = []
+            for loss,feature, label in zip(loss_list,features_list, label_list):
+                if loss < threshold:
+                    # prediction = Benign
+                    if label == 0:
+                        tn += 1
+                    else:
+                        fn +=1
+                else:
+                    anomaly_features.append(feature)
+                    anomaly_labels.append(label)
+                    # prediction = Attack
+                    if label == 0:
+                        fp += 1
+                    else:
+                        tp += 1
+
             
+            print(f"values:  tp: {tp} tn: {tn} fp: {fp} fn: {fn}")
 
-        print( f"Test Loss: {avg_test_loss:.6f}")
-        print( f"Test Loss: {avg_test_loss_benign:.6f}")
-        print( f"Test Loss: {avg_test_loss_attack:.6f}")
-        print( f"Test Loss: {avg_test_loss_zero:.6f}")
-        
-        print( f"Test MSE: {avg_mse_benign:.6f}")
-        print( f"Test MSE: {avg_mse_attack:.6f}")
-        print( f"Test MSE: {avg_mse_zero:.6f}")
+            accuracy = (tp + tn) / (tp + tn + fp + fn)
+            precision = tp / (tp + fp + 1e-8)
+            recall = tp / (tp + fn + 1e-8)
+            f1_score = 2 * ((precision * recall) / (precision + recall + 1e-8))
 
-        print( f"{minBenign} : {maxBenign} : {minZero} : {maxZero} : {minAttack} : {maxAttack}")
+            df_features = pd.DataFrame(anomaly_features)
+            df_labels = pd.DataFrame(anomaly_labels, columns=["label"])
 
-
-
-
-        plt.figure(figsize=(12, 8))
-
-        # Plot benign
-        plt.subplot(3, 1, 1)
-        plt.plot(range(len(lossBenign)), lossBenign, label="Benign", color="green")
-        plt.ylabel("Loss")
-        plt.title("Reconstruction Loss (Benign)")
-        plt.legend()
-
-        # Plot attack
-        plt.subplot(3, 1, 2)
-        plt.plot(range(len(lossAttack)), lossAttack, label="Attacks", color="red")
-        plt.ylabel("Loss")
-        plt.title("Reconstruction Loss (Attacks)")
-        plt.legend()
-
-        # Plot zero-day
-        plt.subplot(3, 1, 3)
-        plt.plot(range(len(lossZero)), lossZero, label="Zero-day", color="blue")
-        plt.xlabel("Index (sample)")
-        plt.ylabel("Loss")
-        plt.title("Reconstruction Loss (Zero-day)")
-        plt.legend()
-
-        plt.tight_layout()
-        plt.savefig("reconstruction_losses.png", dpi=300)
-    
-        plt.close()
+            df_features.to_pickle(os.path.join(DATA_DIR, 'filtered', 'features/features.pkl'))
+            df_labels.to_pickle(os.path.join(DATA_DIR, 'filtered', 'labels/labels.pkl'))
+            print("Saved anomalous samples to anomalous_features.pkl and anomalous_labels.pkl")
 
         plt.figure(figsize=(12,8))
 
-        plt.hist(lossBenign, bins=100, alpha=0.5, label='Benign')   
-        plt.hist(lossAttack, bins=100, alpha=0.5, label='Attacks')
-        plt.hist(lossZero, bins=100, alpha=0.5, label='ZeroDay')
+        plt.hist(loss_Benign, bins=100, alpha=0.5, label='Benign')   
+        plt.hist(loss_Attack, bins=100, alpha=0.5, label='Attacks')
+        plt.hist(loss_Zero, bins=100, alpha=0.5, label='ZeroDay')
+        plt.axvline(threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold = {threshold:.3f}')
         plt.title("reconstuction hist")
         plt.legend()
-        plt.savefig("reconstruction hist.png", dpi=300)
+        plt.savefig("reconstruction hist_1st.png", dpi=300)
 
-        """
+        result['test']['avg_test_loss'] = avg_test_loss
+        result['test']['tp'] = tp
+        result['test']['tn'] = tn
+        result['test']['fp'] = fp
+        result['test']['fn'] = fn
+        result['test']['accuracy'] = accuracy
+        result['test']['precision'] = precision
+        result['test']['recall'] = recall
+        result['test']['f1_score'] = f1_score
+
+        return result
+
+    def testZero(
+            self: torch.nn.Module,
+            criterion: torch.nn.Module,
+            test_loader: torch.utils.data.DataLoader,
+            device
+        ):
+
+        result = {
+        'test': {
+            'avg_test_loss': 0.0,
+            'tp': 0.0,
+            'tn': 0.0,
+            'fp': 0.0,
+            'fn': 0.0,
+            'accuracy': 0.0,
+            'precision': 0.0,
+            'recall': 0.0,
+            'f1_score': 0.0
+        }
+    }
+
+        self.eval()
+
+        loss_list = []
+        label_list = []
+
+        total_test_loss = 0
+        loss_Benign = []
+        loss_Zero = []
+
+        tp = 0
+        fp = 0 
+        tn = 0 
+        fn = 0
+
+        percentile: int = 82
+
+        with torch.no_grad():
+            for inputs, label in tqdm(test_loader):
+                inputs = inputs.to(device)
+                output = self(inputs)
+                loss = criterion(output, inputs)
+                loss_list.append((loss.item()))
+                label_list.append(label)
+                total_test_loss += loss.item() 
+                if label.item() == 4:
+                    loss_Zero.append(loss.item())
+                else:
+                    loss_Benign.append(loss.item())
+                               
+            avg_test_loss = total_test_loss/len(test_loader)
+            print(total_test_loss)
+            print(avg_test_loss)
+
+            threshold = np.percentile(loss_list, percentile)
+            print(f"threshold: {threshold}" )
+
+
+            for loss, label in zip(loss_list, label_list):
+                if loss < threshold:
+                    # prediction = Benign
+                    if label == 4:
+                        fn += 1
+                    else:
+                        tn +=1
+                else:
+                    # prediction = Attack
+                    if label == 4:
+                        tp += 1
+                    else:
+                        fp += 1
+
+            
+            print(f"values:  tp: {tp} tn: {tn} fp: {fp} fn: {fn}")
+            
+            accuracy = (tp + tn) / (tp + tn + fp + fn)
+            precision = tp / (tp + fp + 1e-8)
+            recall = tp / (tp + fn + 1e-8)
+            f1_score = 2 * ((precision * recall) / (precision + recall + 1e-8))
+
+        print( f"Test Loss: {avg_test_loss:.6f}")
+        print(f"precision: {precision}")
+        print(f"recall: {recall}")
+        print(f"f1 score: {f1_score}")
+        
         plt.figure(figsize=(12,8))
 
-        plt.plot(range(len(losslist)),losslist,label='loss', color='green')
-        plt.ylabel('loss')
-        plt.title('Reconstruction Loss Aute encoder')
+        plt.hist(loss_Benign, bins=100, alpha=0.5, label='Benign')   
+        plt.hist(loss_Zero, bins=100, alpha=0.5, label='ZeroDay')
+
+        plt.axvline(threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold = {threshold:.3f}')
+        plt.title("reconstuction hist")
         plt.legend()
-        plt.tight_layout
-        plt.savefig("reconstructio_loss_batch.png", dpi=300)
-        """
+        plt.savefig("reconstruction hist_2nd.png", dpi=300)
+    
+        result['test']['avg_test_loss'] = avg_test_loss
+        result['test']['tp'] = tp
+        result['test']['tn'] = tn
+        result['test']['fp'] = fp
+        result['test']['fn'] = fn
+        result['test']['accuracy'] = accuracy
+        result['test']['precision'] = precision
+        result['test']['recall'] = recall
+        result['test']['f1_score'] = f1_score
 
-    
-    
-        """
-        plt.hist(lossBenign.detach().cpu().numpy(), bins=50, alpha=0.5, label="benign")
-        plt.hist(lossZero.detach().cpu().numpy(), bins=50, alpha=0.5, label="zero-day")
-        plt.legend()
-        plt.show()
-        """
-    
-            
-    """    
-    def train(self, train_loader):
-        for epoch in range(1, self.num_epochs+1):
-
-            criterion = nn.MSELoss()
-            optimizer = optim.Adam(model.parameters(), lr=lr)
-            model.to(device)
-
-            model.train()
-            for epoch in range(epochs):
-                total_loss = 0
-                for batch in dataloader:
-                    batch = batch[0].to(device)  # if dataloader returns (data, labels)
-                    optimizer.zero_grad()
-                    reconstructed = model(batch)
-                    loss = criterion(reconstructed, batch)
-                    loss.backward()
-                    optimizer.step()
-                    total_loss += loss.item()
-                print(f"Epoch [{epoch+1}/{epochs}], Loss: {total_loss/len(dataloader):.6f}")
-    
-        # Define Autoencoder model
-    
-        model = Sequential()
-        model.add(LSTM(128, activation='relu', input_shape=(), return_sequence=True))
-        model.add(LSTM(64,activation='relu', input_shape=(), return_sequence=False))
-        model.add(RepeatVector())
-        model.add(LSTM(64,activation='relu', input_shape=(), return_sequence=True))
-        model.add(LSTM(128, activation='relu', input_shape=(), return_sequence=True))
-
-        model.compile(optimizer='adam', loss ='mse')
-        model.summary()
-    
-    """
+        return result

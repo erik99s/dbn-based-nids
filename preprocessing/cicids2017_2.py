@@ -101,7 +101,7 @@ class CICIDS2017Preprocessor(object):
             'Heartbleed': 'ZeroDay',
             'FTP-Patator': 'Brute Force',
             'SSH-Patator': 'Brute Force',
-            'Bot': 'Bot',
+            'Bot': 'ZeroDay',
             'Web Attack � Brute Force': 'ZeroDay',
             'Web Attack � Sql Injection': 'ZeroDay',
             'Web Attack � XSS': 'ZeroDay',
@@ -147,13 +147,23 @@ class CICIDS2017Preprocessor(object):
         X_AE_val = val_benign.drop(labels=['label', 'label_category'], axis=1)
         y_AE_val = val_benign['label_category']
 
-        attackList = ['PortScan', 'DoS', 'Brute Force', 'Bot']
+        attackList = ['PortScan', 'DoS', 'Brute Force']
+        benignSamples = train_benign.sample(n=200000)
     
-        train_attacks = train[train['label_category'].isin(attackList)]
+        train_attacks_temp = train[train['label_category'].isin(attackList)]
+        print(train_attacks_temp.shape)
+        print(benignSamples.shape)
+        train_attacks = pd.concat([benignSamples,train_attacks_temp],axis=0)
+
+        print(train_attacks.shape)
         X_DBN_train = train_attacks.drop(labels=['label', 'label_category'], axis=1)
         y_DBN_train = train_attacks['label_category']
 
-        val_attacks = val[~val['label_category'].isin(['ZeroDay', 'Benign'])]
+        benignSamples = val_benign.sample(n=70000)
+        val_attacks_temp = val[~val['label_category'].isin(['ZeroDay', 'Benign'])]
+
+        val_attacks = pd.concat([benignSamples, val_attacks_temp])
+
         X_DBN_val = val_attacks.drop(labels=['label', 'label_category'], axis=1)
         y_DBN_val = val_attacks['label_category']
 
