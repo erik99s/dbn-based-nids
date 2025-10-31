@@ -17,7 +17,7 @@ import os
 
 DATA_DIR  = os.path.join(os.path.abspath("."), "data")
 
-class AE(nn.Module): 
+class AE_2nd(nn.Module): 
     def __init__(self,
                  n_visible=49,
                  n_hidden=[128,64],
@@ -38,7 +38,7 @@ class AE(nn.Module):
             num_epochs (tuple): Number of epochs per layer.
         """
 
-        super(AE, self).__init__()
+        super(AE_2nd, self).__init__()
 
         self.n_visible = n_visible
         self.n_hidden = n_hidden
@@ -47,69 +47,24 @@ class AE(nn.Module):
         self.batch_size = batch_size
         self.num_epochs = num_epochs
 
-        """
-        self.encoder = nn.Sequential(
-            nn.Linear(n_visible, n_hidden[0]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[0],n_classes)
-        )
-
-        self.decoder = nn.Sequential(
-            nn.Linear(n_classes,n_hidden[0]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[0],n_visible)
-        )
-
-    
-        self.encoder = nn.Sequential(
-            nn.Linear(n_visible, n_hidden[0]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[0], n_hidden[1]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[1], n_hidden[2]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[2], n_hidden[3]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[3], n_classes)
-        )
-        # Decoder layers
-        self.decoder = nn.Sequential(
-            nn.Linear(n_classes, n_hidden[3]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[3], n_hidden[2]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[2], n_hidden[1]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[1], n_hidden[0]),
-            nn.ReLU(),
-            nn.Linear(n_hidden[0], n_visible)
-        )
-
-        """
 
         self.encoder = nn.Sequential(
-            nn.Linear(49, 32),
+            nn.Linear(49, 42),
             nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(32, 16),
+            nn.Linear(42, 35),
             nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(16, 8)
-)
+            nn.Linear(35, 25),
+        )   
         # Decoder layers
         
         self.decoder = nn.Sequential(
-            nn.Linear(8, 16),
+            nn.Linear(25, 35),
             nn.ReLU(),
-            nn.Linear(16, 32),
+            nn.Linear(35, 42),
             nn.ReLU(),
-            nn.Linear(32, 49),
+            nn.Linear(42, 49),
             nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
         )
-
-        # For every possible layer
-
-        # Creating the Fully Connected layer to append on t op of DBNs
        
     
     def mse(self, batch):
@@ -211,7 +166,7 @@ class AE(nn.Module):
                 total_test_loss += loss.item() 
                 if label.item() == 0:
                     loss_Benign.append(loss.item())
-                elif label.item() == 4:
+                elif label.item() == 5:
                     loss_Zero.append(loss.item())
                 else:
                     loss_Attack.append(loss.item())

@@ -43,14 +43,15 @@ def main(config):
     # loading the Auto Encoder
 
     logging.info("loading dataset for AE")
-    _, _, test_loader = dataset.load_data_ae(
+    _, _, _ ,_, test_loader = dataset.load_data(
         data_path=DATA_DIR,
-        batch_size=config["data_loader_ae"]["args"]["batch_size"],
+        batch_size=config["data_loader"]["args"]["batch_size"],
+        index = 1
     )
     logging.info("Datasets loaded")
 
     model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
-    model.load_state_dict(torch.load("./stored_models/dbn_model_benign.pth"))
+    model.load_state_dict(torch.load("./stored_models/dbn_model_benign_attack.pth"))
     model.to(DEVICE)
 
    

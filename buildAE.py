@@ -63,8 +63,8 @@ def main(config):
     model.fit(
         criterion=criterion,
         optimizer=optimizer,
-        train_loader=train_loader_attacks,
-        valid_loader=valid_loader_attacks,
+        train_loader=train_loader,
+        valid_loader=valid_loader,
         device=DEVICE
     )
 

@@ -275,8 +275,4 @@ class DBN(nn.Module):
             mse.append(model_mse)
             pl.append(model_pl)
 
-            print("in DBN")
-            print(mse)
-            print(pl)
-
         return mse, pl

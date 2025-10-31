@@ -74,7 +74,7 @@ def main(config):
     )
 
     auto_encoder = models.load_model(model_name=config["auto_encoder_2nd"]["type"], params=config["auto_encoder_2nd"]["args"])
-    auto_encoder.load_state_dict(torch.load("./stored_models/autoencoder_model_2nd_120.pth"))
+    auto_encoder.load_state_dict(torch.load("./stored_models/autoencoder_model_attacks_64_32_16_8.pth"))
     auto_encoder.to(DEVICE)
 
     print(auto_encoder)

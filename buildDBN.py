@@ -51,7 +51,7 @@ def main(config):
  
     train_loader, valid_loader, _, _, test_loader = dataset.load_data(
         data_path=DATA_DIR,
-        batch_size=config["data_loader_ae"]["args"]["batch_size"],
+        batch_size=config["data_loader"]["args"]["batch_size"],
         index = 1
     )
 
@@ -70,7 +70,7 @@ def main(config):
         device=DEVICE
     )
 
-    torch.save(model.state_dict(), "dbn_model.pth")
+    torch.save(model.state_dict(), "dbn_model_benign_original.pth")
 
     print("done training")
 
