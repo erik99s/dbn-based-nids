@@ -220,9 +220,9 @@ class AE_1st(nn.Module):
 
         plt.figure(figsize=(12,8))
 
-        plt.hist(loss_Benign, bins=100, alpha=0.5, label='Benign')   
-        plt.hist(loss_Attack, bins=100, alpha=0.5, label='Attacks')
-        plt.hist(loss_Zero, bins=100, alpha=0.5, label='ZeroDay')
+        plt.hist(loss_Benign, bins='auto', alpha=0.5, label='Benign')   
+        plt.hist(loss_Attack, bins='auto', alpha=0.5, label='Attacks')
+        plt.hist(loss_Zero, bins='auto', alpha=0.5, label='ZeroDay')
         plt.axvline(threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold = {threshold:.3f}')
         plt.title("reconstuction hist")
         plt.legend()

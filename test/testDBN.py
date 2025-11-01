@@ -51,7 +51,7 @@ def main(config):
     logging.info("Datasets loaded")
 
     model = models.load_model(model_name=config["model"]["type"], params=config["model"]["args"])
-    model.load_state_dict(torch.load("./stored_models/dbn_model_benign_attack.pth"))
+    model.load_state_dict(torch.load("./stored_models/dbn_model_benign_original_20_epochs.pth"))
     model.to(DEVICE)
 
    
@@ -62,9 +62,7 @@ def main(config):
        
     test_history = test(
         model=model,
-        auto_encoder = model,
         criterion=criterion,
-        criterionAE=criterion,
         test_loader=test_loader,
         device=DEVICE
     )

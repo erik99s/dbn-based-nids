@@ -129,20 +129,12 @@ def test(
     recall = tp / (tp + fn + 1e-8)
     f1_score = 2 * precision * recall / (precision + recall + 1e-8)
 
-    plt.figure(figsize=(12,8))
-
-    plt.hist(loss_Benign, bins=100, alpha=0.5, label='Benign')   
-    plt.hist(loss_Attack, bins=100, alpha=0.5, label='Attacks')
-    plt.hist(loss_Zero, bins=100, alpha=0.5, label='ZeroDay')
-    plt.title("reconstuction hist")
-    plt.legend()
-    plt.savefig("reconstruction hist_dbn_dbn.png", dpi=300)
 
     plt.figure(figsize=(12,8))
 
-    plt.hist(loss_Benign_mse, bins=100, alpha=0.5, label='Benign')   
-    plt.hist(loss_Attack_mse, bins=100, alpha=0.5, label='Attacks')
-    plt.hist(loss_Zero_mse, bins=100, alpha=0.5, label='ZeroDay')
+    plt.hist(loss_Benign_mse, bins='auto', alpha=0.5, label='Benign')   
+    plt.hist(loss_Attack_mse, bins='auto', alpha=0.5, label='Attacks')
+    plt.hist(loss_Zero_mse, bins='auto', alpha=0.5, label='ZeroDay')
     plt.title("reconstuction hist")
     plt.legend()
     plt.savefig("reconstruction hist_dbn_mse.png", dpi=300)
