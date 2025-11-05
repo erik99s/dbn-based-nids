@@ -65,6 +65,7 @@ class AE_2nd(nn.Module):
             nn.Linear(42, 49),
             nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
         )
+
         
         self.encoder = nn.Sequential(
             nn.Linear(49, 64),
@@ -90,18 +91,19 @@ class AE_2nd(nn.Module):
         """
 
         self.encoder = nn.Sequential(
-            nn.Linear(49, 32),
+            nn.Linear(49, 25),
             nn.ReLU(),
-            nn.Linear(32, 16),
+            nn.Linear(25, 12),
         )   
         # Decoder layers
         
         self.decoder = nn.Sequential(
-            nn.Linear(16, 32),
+            nn.Linear(12, 25),
             nn.ReLU(),
-            nn.Linear(32, 49),
+            nn.Linear(25, 49),
             nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
         )
+        
        
     
     def mse(self, batch):
@@ -252,9 +254,9 @@ class AE_2nd(nn.Module):
 
         plt.figure(figsize=(12,8))
 
-        plt.hist(loss_Benign, bins=100, alpha=0.5, label='Benign')   
-        plt.hist(loss_Attack, bins=100, alpha=0.5, label='Attacks')
-        plt.hist(loss_Zero, bins=100, alpha=0.5, label='ZeroDay')
+        plt.hist(loss_Benign, bins='auto', alpha=0.5, label='Benign')   
+        plt.hist(loss_Attack, bins='auto', alpha=0.5, label='Attacks')
+        plt.hist(loss_Zero, bins='auto', alpha=0.5, label='ZeroDay')
         plt.axvline(threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold = {threshold:.3f}')
         plt.title("reconstuction hist")
         plt.legend()
