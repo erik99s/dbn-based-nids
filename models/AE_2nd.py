@@ -66,7 +66,6 @@ class AE_2nd(nn.Module):
             nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
         )
 
-        
         self.encoder = nn.Sequential(
             nn.Linear(49, 64),
             nn.ReLU(),
@@ -89,7 +88,6 @@ class AE_2nd(nn.Module):
             nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
         )
         """
-
         self.encoder = nn.Sequential(
             nn.Linear(49, 25),
             nn.ReLU(),
@@ -103,7 +101,21 @@ class AE_2nd(nn.Module):
             nn.Linear(25, 49),
             nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
         )
+        """
+        self.encoder = nn.Sequential(
+            nn.Linear(49, 32),
+            nn.ReLU(),
+            nn.Linear(32, 16),
+        )   
+        # Decoder layers
         
+        self.decoder = nn.Sequential(
+            nn.Linear(16, 32),
+            nn.ReLU(),
+            nn.Linear(32, 49),
+            nn.Sigmoid()  # use Sigmoid if your inputs are scaled to [0, 1]; otherwise use ReLU
+        )
+        """
        
     
     def mse(self, batch):
@@ -192,7 +204,7 @@ class AE_2nd(nn.Module):
         tn = 0 
         fn = 0
 
-        percentile: int = 66
+        percentile: int = 70
 
         with torch.no_grad():
             for inputs, label in tqdm(test_loader):
@@ -257,7 +269,8 @@ class AE_2nd(nn.Module):
         plt.hist(loss_Benign, bins='auto', alpha=0.5, label='Benign')   
         plt.hist(loss_Attack, bins='auto', alpha=0.5, label='Attacks')
         plt.hist(loss_Zero, bins='auto', alpha=0.5, label='ZeroDay')
-        plt.axvline(threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold = {threshold:.3f}')
+        plt.xlim(0, 0.2)
+        # plt.axvline(threshold, color='red', linestyle='--', linewidth=2, label=f'Threshold = {threshold:.3f}')
         plt.title("reconstuction hist")
         plt.legend()
         plt.savefig("reconstruction hist_1st.png", dpi=300)

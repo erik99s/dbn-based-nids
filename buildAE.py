@@ -68,7 +68,7 @@ def main(config):
         device=DEVICE
     )
 
-    torch.save(model.state_dict(), "autoencoder_model_64_49_32_16.pth")
+    torch.save(model.state_dict(), "autoencoder_model_42_35_25.pth")
 
     print("done training")
 

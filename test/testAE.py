@@ -52,7 +52,7 @@ def main(config):
     logging.info("Datasets loaded")
    
     auto_encoder = models.load_model(model_name=config["auto_encoder_2nd"]["type"], params=config["auto_encoder_2nd"]["args"])
-    auto_encoder.load_state_dict(torch.load("./stored_models/autoencoder_model_25_15.pth"))
+    auto_encoder.load_state_dict(torch.load("./stored_models/autoencoder_model_25_15_110e.pth"))
     auto_encoder.to(DEVICE)
 
     criterion = nn.MSELoss(reduction='mean')

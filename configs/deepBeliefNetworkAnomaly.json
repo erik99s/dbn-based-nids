@@ -33,7 +33,7 @@
             "n_classes": 64,
             "learning_rate": 1e-3,
             "batch_size": 64,
-            "num_epochs": 70
+            "num_epochs": 110
         } 
     },
     "data_loader": {

@@ -135,6 +135,7 @@ def test(
     plt.hist(loss_Benign_mse, bins='auto', alpha=0.5, label='Benign')   
     plt.hist(loss_Attack_mse, bins='auto', alpha=0.5, label='Attacks')
     plt.hist(loss_Zero_mse, bins='auto', alpha=0.5, label='ZeroDay')
+    plt.xlim(0.05, 0.35)
     plt.title("reconstuction hist")
     plt.legend()
     plt.savefig("reconstruction hist_dbn_mse.png", dpi=300)

@@ -54,6 +54,8 @@ def main(config):
     model.load_state_dict(torch.load("./stored_models/dbn_model_benign_original_20_epochs.pth"))
     model.to(DEVICE)
 
+    print(model)
+
    
     criterion = getattr(torch.nn, config["loss"]["type"])(**config["loss"]["args"])
     optimizer = [getattr(torch.optim, config["optimizer"]["type"])(params=m.parameters(), **config["optimizer"]["args"])
